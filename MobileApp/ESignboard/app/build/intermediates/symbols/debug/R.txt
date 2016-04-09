@@ -590,8 +590,9 @@ int layout select_dialog_singlechoice_material 0x7f040024
 int layout support_simple_spinner_dropdown_item 0x7f040025
 int mipmap ic_launcher 0x7f030000
 int string BT_connecting 0x7f060014
-int string BT_no_adapter 0x7f060015
-int string BT_start_discovery 0x7f060016
+int string BT_disabled 0x7f060015
+int string BT_no_adapter 0x7f060016
+int string BT_start_discovery 0x7f060017
 int string abc_action_bar_home_description 0x7f060000
 int string abc_action_bar_home_description_format 0x7f060001
 int string abc_action_bar_home_subtitle_description_format 0x7f060002
@@ -611,7 +612,7 @@ int string abc_searchview_description_voice 0x7f06000f
 int string abc_shareactionprovider_share_with 0x7f060010
 int string abc_shareactionprovider_share_with_application 0x7f060011
 int string abc_toolbar_collapse_description 0x7f060012
-int string app_name 0x7f060017
+int string app_name 0x7f060018
 int string status_bar_notification_info_overflow 0x7f060013
 int style AlertDialog_AppCompat 0x7f090086
 int style AlertDialog_AppCompat_Light 0x7f090087

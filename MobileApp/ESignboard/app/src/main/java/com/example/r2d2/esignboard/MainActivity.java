@@ -26,9 +26,9 @@ public class MainActivity extends Activity {
     // mLvDevices to wyświetlana lista w aplikacji
     private ListView mLvDevices;
     // mStringDeviceList to elementy wyświetlanej listy
-    private ArrayList<String> mStringDeviceList = new ArrayList<String>();
+    private ArrayList<String> mStringDeviceList;
     // mBtDeviceList to lista znalezionych odbiorników BT
-    private ArrayList<BluetoothDevice> mBtDeviceList = new ArrayList<BluetoothDevice>();
+    private ArrayList<BluetoothDevice> mBtDeviceList;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -36,13 +36,14 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         mLvDevices = (ListView) findViewById(R.id.lvDevices);
-
+        mStringDeviceList = new ArrayList<String>();
+        mBtDeviceList = new ArrayList<BluetoothDevice>()
+        // Przypisanie do zmiennej domyślnego modułu BT
+        mBtAdapter = BluetoothAdapter.getDefaultAdapter();
+        // Zarejestrowanie odbiornika
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         registerReceiver(mBtReceiver, filter);
 
-
-        // Getting the Bluetooth adapter
-        mBtAdapter = BluetoothAdapter.getDefaultAdapter();
         // Gdy urządzenie ma moduł BT
         if(mBtAdapter != null) {
             //Gdy moduł BT jest włączony
@@ -84,6 +85,7 @@ public class MainActivity extends Activity {
         if (mBtAdapter.isDiscovering()) {
             mBtAdapter.cancelDiscovery();
         }
+        // Odrejestrowanie odbiornika
         unregisterReceiver(mBtReceiver);
     }
 
@@ -96,7 +98,7 @@ public class MainActivity extends Activity {
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 // Dodanie znalezionego urządzenia do wyświetlanej listy
-                mStringDeviceList.add(device.getAddress() + ", " + device.getAddress());
+                mStringDeviceList.add(device.getName() + ", " + device.getAddress());
                 // Dodanie znalezionego urządzenia do listy urządzeń
                 mBtDeviceList.add(device);
                 ArrayAdapter<String> adapter = new ArrayAdapter<String>(getApplicationContext(), android.R.layout.simple_list_item_1, mStringDeviceList);
