@@ -56,7 +56,7 @@ MERGED from [com.android.support:support-v4:23.2.1] H:\zespolowy\zespolowy\Mobil
 	android:allowBackup
 		ADDED from H:\zespolowy\zespolowy\MobileApp\ESignboard\app\src\main\AndroidManifest.xml:14:9-35
 	android:theme
-		ADDED from H:\zespolowy\zespolowy\MobileApp\ESignboard\app\src\main\AndroidManifest.xml:16:9-70
+		ADDED from H:\zespolowy\zespolowy\MobileApp\ESignboard\app\src\main\AndroidManifest.xml:16:9-56
 activity#com.example.r2d2.esignboard.MainActivity
 ADDED from H:\zespolowy\zespolowy\MobileApp\ESignboard\app\src\main\AndroidManifest.xml:17:9-25:20
 	android:label
