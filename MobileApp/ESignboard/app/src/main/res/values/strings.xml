@@ -1,7 +1,0 @@
-<resources>
-    <string name="app_name">E-Signboard</string>
-    <string name="BT_start_discovery">Starting discovery...</string>
-    <string name="BT_disabled">Enable bluetooth</string>
-    <string name="BT_no_adapter">Bluetooth disabled or not available.</string>
-    <string name="BT_connecting">Connecting to device.</string>
-</resources>
