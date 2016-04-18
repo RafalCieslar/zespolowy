@@ -7,6 +7,7 @@
 <body>
 <h1>E-Signboard</h1>
 <p>Witaj na stronie głównej projektu E-Signboard.</p>
-<p><a href="">Zarejestruj</a> | <a href="">Zaloguj</a></p>
+<p><a href="{% url 'user:register' %}">Zarejestruj</a> | <a href="{% url 'user:login' %}">Zaloguj</a></p>
+<p><a href="{% url 'devices:dashboard' %}">Lista urządzeń</a> - ta strona wyświetli się tylko zalogowanemu użytkownikowi</p>
 </body>
 </html>
