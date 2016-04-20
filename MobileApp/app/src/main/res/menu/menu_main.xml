@@ -2,12 +2,23 @@
 
     <item
         android:id="@+id/menu_enable_bt"
-        android:title="@string/text_enable" />
+        android:icon="@drawable/bluetooth_48dp"
+        android:title="@string/text_enable"
+        android:showAsAction="ifRoom" />
     <item
         android:id="@+id/menu_paired_devices"
         android:title="@string/text_list_paired_devices" />
     <item
         android:id="@+id/menu_scan"
         android:title="@string/text_scan_devices" />
+    <item
+        android:id="@+id/view_webview"
+        android:title="Show/Hide WebView" />
+    <item
+        android:id="@+id/test_download"
+        android:title="Test download" />
+    <item
+        android:id="@+id/test_view"
+        android:title="Test View" />
 
 </menu>
