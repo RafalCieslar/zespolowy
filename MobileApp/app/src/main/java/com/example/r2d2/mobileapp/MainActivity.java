@@ -2,6 +2,8 @@ package com.example.r2d2.mobileapp;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.net.wifi.ScanResult;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -9,6 +11,7 @@ import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -33,6 +36,9 @@ public class MainActivity extends Activity {
     private ArrayAdapter<String> BTArrayAdapter;
     private HashSet<String> eSignboardDevices  = new HashSet<String>();
 
+    private WifiManager myWifiManager;
+    private WifiReceiver myWifiReceiver;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +46,12 @@ public class MainActivity extends Activity {
 
         // define ESignboard's Mac Adresses
         eSignboardDevices.add("00:1A:7D:DA:71:07");
+
+        // connect to Wifi Manager and start discovering
+        myWifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+        myWifiReceiver = new WifiReceiver();
+        registerReceiver(myWifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+        myWifiManager.startScan();
 
         // take an instance of BluetoothAdapter - Bluetooth radio
         myBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -86,6 +98,18 @@ public class MainActivity extends Activity {
         }
     }
 
+    @Override
+    protected void onPause() {
+        unregisterReceiver(myWifiReceiver);
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        registerReceiver(myWifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+        myWifiManager.startScan();
+        super.onResume();
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -115,10 +139,22 @@ public class MainActivity extends Activity {
                 if(eSignboardDevices.contains(device.getAddress())){
                     notyfikuj("ESignboard in range!", "");
                 }
-
             }
         }
     };
+
+
+    class WifiReceiver extends BroadcastReceiver {
+        public void onReceive(Context c, Intent intent) {
+            List<ScanResult> wifiScanList = myWifiManager.getScanResults();
+            for (ScanResult result : wifiScanList){
+                if (result.SSID.equals("Ruter Sruter Dd")){
+                    notyfikuj("mDevice in range!", "");
+                }
+            }
+        }
+    }
+
 
     public void find(View view) {
         if (myBluetoothAdapter.isDiscovering()) {
