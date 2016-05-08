@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import android.content.BroadcastReceiver;
@@ -16,6 +17,8 @@ import android.content.Intent;
 import android.content.IntentFilter;
 
 import android.graphics.Color;
+import android.net.wifi.ScanResult;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.view.Menu;
@@ -45,6 +48,10 @@ public class MainActivity extends Activity {
 
 	private BluetoothAdapter mBluetoothAdapter;
 
+	private String mWifis[];
+	private WifiManager mWifiManager;
+	private WifiScanReceiver mWifiReciever;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -55,6 +62,10 @@ public class MainActivity extends Activity {
 		mContentWv			= (WebView) findViewById(R.id.webView);
 
 		mBluetoothAdapter	= BluetoothAdapter.getDefaultAdapter();
+
+		mWifiManager		= (WifiManager)getSystemService(Context.WIFI_SERVICE);
+		mWifiReciever		= new WifiScanReceiver();
+		mWifiManager.startScan();
 
 		mProgressDlg 		= new ProgressDialog(this);
 		mProgressDlg.setMessage("Scanning...");
@@ -102,8 +113,15 @@ public class MainActivity extends Activity {
 				mBluetoothAdapter.cancelDiscovery();
 			}
 		}
+		unregisterReceiver(mWifiReciever);
 
 		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		registerReceiver(mWifiReciever, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+		super.onResume();
 	}
 
 	@Override
@@ -127,26 +145,27 @@ public class MainActivity extends Activity {
 			turnBtOnOff();
 			invalidateOptionsMenu();
 			return true;
-		}
-		else if (id == R.id.menu_paired_devices) {
+		} else if (id == R.id.menu_enable_wifi ) {
+			turnWifiOnOff();
+			return true;
+		} else if (id == R.id.menu_paired_devices) {
 			showPairedDevices();
 			return true;
-		}
-		else if (id == R.id.menu_scan) {
+		} else if (id == R.id.menu_scan) {
 			scanDevices();
 			return true;
-		}
-		else if (id == R.id.view_webview) {
+		} else if (id == R.id.view_webview) {
 			if (mContentWv.getVisibility() == View.VISIBLE)
 				hideWebView();
 			else
 				showWebView();
-		}
-		else if (id == R.id.test_download) {
+			return true;
+		} else if (id == R.id.test_download) {
 			downloadFile("http://www.kurshtml.edu.pl/html/zielony.html");
-		}
-		else if (id == R.id.test_view) {
+			return true;
+		} else if (id == R.id.test_view) {
 			loadFileToWebView("zielony");
+			return true;
 		}
 
 		return super.onOptionsItemSelected(item);
@@ -156,14 +175,14 @@ public class MainActivity extends Activity {
 	public boolean onPrepareOptionsMenu (Menu menu) {
 		if (mBluetoothAdapter != null) {
 			boolean btState = mBluetoothAdapter.isEnabled();
-			menu.getItem(0).setTitle(btState ? "Disable" : "Enable");
-			menu.getItem(1).setEnabled(btState);
-			menu.getItem(2).setEnabled(btState);
+			menu.getItem(0).setTitle(btState ? "Disable BT" : "Enable BT");
+			menu.getItem(3).setEnabled(btState);
+			menu.getItem(4).setEnabled(btState);
 		}
 		else {
 			menu.getItem(0).setEnabled(false);
-			menu.getItem(1).setEnabled(false);
-			menu.getItem(2).setEnabled(false);
+			menu.getItem(3).setEnabled(false);
+			menu.getItem(4).setEnabled(false);
 		}
 		return true;
 	}
@@ -193,10 +212,12 @@ public class MainActivity extends Activity {
 		mBtOffTv.setVisibility(View.VISIBLE);
 	}
 
+	// Funkcja wczytujaca plik html (o nazwie z parametru) do WebView
 	private void loadFileToWebView(String file) {
 		mContentWv.loadUrl("file:///" + this.getFilesDir().toString() + "/" + file + ".html");
 	}
 
+	// Funkcja rozpoczynajaca pobieranie pliku z adresu podanego w parametrze
 	private void downloadFile(String url) {
 		final DownloadTask downloadTask = new DownloadTask(this);
 		downloadTask.execute(url);
@@ -209,6 +230,7 @@ public class MainActivity extends Activity {
 		});
 	}
 
+	// Funkcja wlączajaca/wyłączajaca modul BT
 	private void turnBtOnOff() {
 		if (mBluetoothAdapter.isEnabled()) {
 			mBluetoothAdapter.disable();
@@ -219,6 +241,18 @@ public class MainActivity extends Activity {
 		}
 	}
 
+	// Funkcja wlaczajaca/wyłączająca modul WiFi
+	private void turnWifiOnOff() {
+		if (mWifiManager.isWifiEnabled()) {
+			mWifiManager.setWifiEnabled(false);
+			showToast("WiFi disabled");
+		} else {
+			mWifiManager.setWifiEnabled(true);
+			showToast("WiFi enabled");
+		}
+	}
+
+	// Funkcja powodujaca wyswietlenie sie listy zparowanych urzadzeń
 	private void showPairedDevices () {
 		Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
 
@@ -237,6 +271,9 @@ public class MainActivity extends Activity {
 		}
 	}
 
+	// Funkcja rozpoczynajaca wyszukiwanie urzadzen BT
+	// zakomentowane linie kodu to proba rozpoczecia wyszukiwania na Androidach od wersji 6.0
+	// ale i tak coś nie działa
 	private void scanDevices () {
 //		int hasPermission = ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION);
 //		if (hasPermission == PackageManager.PERMISSION_GRANTED) {
@@ -251,6 +288,7 @@ public class MainActivity extends Activity {
 //		}
 	}
 
+	// Funkcja wyswietlajaca Toast
 	private void showToast(String message) {
 		Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
 	}
@@ -284,10 +322,28 @@ public class MainActivity extends Activity {
 
 	        	mDeviceList.add(device);
 
+				// Moment gdy znajduje sie nowe urządzenie BT
+
 	        	showToast("Found device " + device.getName());
 	        }
 	    }
 	};
+
+	private class WifiScanReceiver extends BroadcastReceiver{
+		public void onReceive(Context c, Intent intent) {
+			List<ScanResult> wifiScanList = mWifiManager.getScanResults();
+
+			for(int i = 0; i < wifiScanList.size(); i++){
+				if ( (wifiScanList.get(i)).toString() == "Ruter Sruter Dd") {
+					showToast("Found mDevice");
+
+				} else {
+					showToast("No mDevices found");
+				}
+			}
+			//lv.setAdapter(new ArrayAdapter<String>(getApplicationContext(),android.R.layout.simple_list_item_1,wifis));
+		}
+	}
 
 	private class DownloadTask extends AsyncTask<String, Integer, String> {
 
