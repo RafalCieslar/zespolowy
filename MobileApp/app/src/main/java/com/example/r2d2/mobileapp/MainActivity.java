@@ -10,11 +10,19 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.StrictMode;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
@@ -31,6 +39,7 @@ public class MainActivity extends Activity {
     private Button findBtn;
     private TextView text;
     private BluetoothAdapter myBluetoothAdapter;
+    private Button updateBtn;
 
     private ListView myListView;
     private ArrayAdapter<String> BTArrayAdapter;
@@ -43,6 +52,10 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                .permitAll().build();
+        StrictMode.setThreadPolicy(policy);
 
         // define ESignboard's Mac Adresses
         eSignboardDevices.add("00:1A:7D:DA:71:07");
@@ -95,6 +108,16 @@ public class MainActivity extends Activity {
             BTArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
 
             myListView.setAdapter(BTArrayAdapter);
+
+            updateBtn = (Button)findViewById(R.id.update);
+            updateBtn.setOnClickListener(new OnClickListener() {
+
+                @Override
+                public void onClick(View v) {
+                    // TODO Auto-generated method stub
+                    checkForUpdate();
+                }
+            });
         }
     }
 
@@ -158,7 +181,48 @@ public class MainActivity extends Activity {
 
     public void checkForUpdate() {
         if (myWifiManager.isWifiEnabled() && myWifiManager.getConnectionInfo().getSSID().equals("\"ESignboard\"")) {
-            
+            boolean update = false;
+            try {
+                File local_checksum = new File(getFilesDir().toString() + "/esignboard_data_checksum.bin");
+                URL url1 = new URL("http://192.168.0.1/esignboard_data_checksum");
+                URL url2 = new URL("file:///" + this.getFilesDir().toString() + "/esignboard_data_checksum.bin");
+
+                Toast.makeText(getApplicationContext(),local_checksum.getPath().toString(),
+                        Toast.LENGTH_LONG).show();
+
+                if (local_checksum.exists()) {
+                    BufferedReader mdevice = new BufferedReader(new InputStreamReader(url1.openStream()));
+                    BufferedReader local = new BufferedReader(new InputStreamReader(url2.openStream()));
+                    String str1, str2;
+                    while ((str1 = mdevice.readLine()) != null && (str2 = local.readLine()) != null) {
+                        if (!str1.equals(str2)) {
+                            Toast.makeText(getApplicationContext(),"Pliki sie roznia!",
+                                    Toast.LENGTH_LONG).show();
+                            update = true;
+                        }
+                    }
+                    mdevice.close();
+                    local.close();
+                } else {
+                    Toast.makeText(getApplicationContext(),"Nie ma lokalnego pliku!",
+                            Toast.LENGTH_LONG).show();
+                    update = true;
+                }
+
+                if (update) {
+                    final DownloadTask downloadTask = new DownloadTask(this);
+                    downloadTask.execute("http://192.168.0.1/esignboard_data_checksum");
+                    downloadTask.execute("http://192.168.0.1/esignboard_data.zip");
+                } else {
+                    Toast.makeText(getApplicationContext(),"Dane sa aktualne!",
+                            Toast.LENGTH_LONG).show();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } else {
+            Toast.makeText(getApplicationContext(),"You're not connected to mDevice",
+                    Toast.LENGTH_LONG).show();
         }
     }
 
