@@ -12,23 +12,29 @@
         android:showAsAction="ifRoom" />
     <item
         android:id="@+id/admin_submenu"
-        android:title="Admin tools" />
-
-        <item
-            android:id="@+id/menu_paired_devices"
-            android:title="@string/text_list_paired_devices" />
-        <item
-            android:id="@+id/menu_scan"
-            android:title="@string/text_scan_devices" />
-        <item
-            android:id="@+id/view_webview"
-            android:title="Show/Hide WebView" />
-        <item
-            android:id="@+id/test_download"
-            android:title="Test download" />
-        <item
-            android:id="@+id/test_view"
-            android:title="Test View" />
-
-
+        android:title="Admin tools">
+        <menu>
+            <item
+                android:id="@+id/menu_paired_devices"
+                android:title="@string/text_list_paired_devices" />
+            <item
+                android:id="@+id/menu_scan"
+                android:title="@string/text_scan_devices" />
+            <item
+                android:id="@+id/view_webview"
+                android:title="Show/Hide WebView" />
+            <item
+                android:id="@+id/test_download"
+                android:title="Test download" />
+            <item
+                android:id="@+id/test_view"
+                android:title="Test View" />
+            <item
+                android:id="@+id/test_zip_download"
+                android:title="Try to download Data Zip" />
+            <item
+                android:id="@+id/test_wifis_found"
+                android:title="Test found WiFi's" />
+        </menu>
+    </item>
 </menu>

@@ -1,14 +1,19 @@
 package e_signboard.mobileapp;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.BufferedInputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -18,6 +23,7 @@ import android.content.IntentFilter;
 
 import android.graphics.Color;
 import android.net.wifi.ScanResult;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.PowerManager;
@@ -48,7 +54,6 @@ public class MainActivity extends Activity {
 
 	private BluetoothAdapter mBluetoothAdapter;
 
-	private String mWifis[];
 	private WifiManager mWifiManager;
 	private WifiScanReceiver mWifiReciever;
 
@@ -164,7 +169,13 @@ public class MainActivity extends Activity {
 			downloadFile("http://www.kurshtml.edu.pl/html/zielony.html");
 			return true;
 		} else if (id == R.id.test_view) {
-			loadFileToWebView("zielony");
+			tryToOpenFile("zielony");
+			return true;
+		} else if (id == R.id.test_zip_download) {
+			downloadDataZip();
+			return true;
+		} else if (id == R.id.test_wifis_found) {
+			checkWifis();
 			return true;
 		}
 
@@ -175,14 +186,14 @@ public class MainActivity extends Activity {
 	public boolean onPrepareOptionsMenu (Menu menu) {
 		if (mBluetoothAdapter != null) {
 			boolean btState = mBluetoothAdapter.isEnabled();
-			menu.getItem(0).setTitle(btState ? "Disable BT" : "Enable BT");
-			menu.getItem(3).setEnabled(btState);
-			menu.getItem(4).setEnabled(btState);
+			//menu.getItem(0).setTitle(btState ? "Disable BT" : "Enable BT");
+			//menu.getItem(3).setEnabled(btState);
+			//menu.getItem(4).setEnabled(btState);
 		}
 		else {
-			menu.getItem(0).setEnabled(false);
-			menu.getItem(3).setEnabled(false);
-			menu.getItem(4).setEnabled(false);
+			//menu.getItem(0).setEnabled(false);
+			//menu.getItem(3).setEnabled(false);
+			//menu.getItem(4).setEnabled(false);
 		}
 		return true;
 	}
@@ -212,11 +223,6 @@ public class MainActivity extends Activity {
 		mBtOffTv.setVisibility(View.VISIBLE);
 	}
 
-	// Funkcja wczytujaca plik html (o nazwie z parametru) do WebView
-	private void loadFileToWebView(String file) {
-		mContentWv.loadUrl("file:///" + this.getFilesDir().toString() + "/" + file + ".html");
-	}
-
 	// Funkcja rozpoczynajaca pobieranie pliku z adresu podanego w parametrze
 	private void downloadFile(String url) {
 		final DownloadTask downloadTask = new DownloadTask(this);
@@ -228,6 +234,29 @@ public class MainActivity extends Activity {
 				downloadTask.cancel(true);
 			}
 		});
+	}
+
+	// Funkcja sprawdzxajaca czy plik istnieje
+	// jezeli tak to wczytuje plik html (o nazwie z parametru) do WebView
+	private void tryToOpenFile(String name) {
+		File file = new File(this.getFilesDir().toString() + "/" + name + ".html");
+		if(file.exists()) {
+			mContentWv.loadUrl("file:///" + this.getFilesDir().toString() + "/" + name + ".html");
+		} else {
+			showToast("File " + name + " doesn't exists");
+		}
+	}
+
+	// Funkcja pobierajaca plik esignboard_data.zip
+	private void downloadDataZip() {
+		final DownloadTask downloadTask = new DownloadTask(this);
+		downloadTask.execute("http://192.168.0.1/esignboard_data.zip");
+		mDownloadProgressDlg.setOnCancelListener(new DialogInterface.OnCancelListener() {
+				@Override
+				public void onCancel(DialogInterface dialog) {
+					downloadTask.cancel(true);
+				}
+			});
 	}
 
 	// Funkcja wlączajaca/wyłączajaca modul BT
@@ -252,6 +281,24 @@ public class MainActivity extends Activity {
 		}
 	}
 
+	private void checkWifis() {
+		WifiConfiguration conf = new WifiConfiguration();
+		conf.SSID = "\"Ruter Sruter Dd\"";
+		conf.preSharedKey = "\"trudnehaslo\"";
+		mWifiManager.addNetwork(conf);
+
+		List<WifiConfiguration> list = mWifiManager.getConfiguredNetworks();
+		for( WifiConfiguration i : list ) {
+			if(i.SSID != null && i.SSID.equals("\"Ruter Sruter Dd\"")) {
+				mWifiManager.disconnect();
+				mWifiManager.enableNetwork(i.networkId, true);
+				mWifiManager.reconnect();
+
+				break;
+			}
+		}
+	}
+
 	// Funkcja powodujaca wyswietlenie sie listy zparowanych urzadzeń
 	private void showPairedDevices () {
 		Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
@@ -260,13 +307,9 @@ public class MainActivity extends Activity {
 			showToast("No Paired Devices Found");
 		} else {
 			ArrayList<BluetoothDevice> list = new ArrayList<BluetoothDevice>();
-
 			list.addAll(pairedDevices);
-
 			Intent intent = new Intent(MainActivity.this, DeviceListActivity.class);
-
 			intent.putParcelableArrayListExtra("device.list", list);
-
 			startActivity(intent);
 		}
 	}
@@ -293,6 +336,48 @@ public class MainActivity extends Activity {
 		Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
 	}
 
+	private boolean unpackZip(String path, String zipname)
+	{
+		InputStream is;
+		ZipInputStream zis;
+		try
+		{
+			String filename;
+			is = new FileInputStream(path + zipname);
+			zis = new ZipInputStream(new BufferedInputStream(is));
+			ZipEntry ze;
+			byte[] buffer = new byte[1024];
+			int count;
+
+			while ((ze = zis.getNextEntry()) != null)
+			{
+				filename = ze.getName();
+
+				if (ze.isDirectory()) {
+					File fmd = new File(path + filename);
+					fmd.mkdirs();
+					continue;
+				}
+
+				FileOutputStream fout = new FileOutputStream(path + filename);
+
+				while ((count = zis.read(buffer)) != -1)
+				{
+					fout.write(buffer, 0, count);
+				}
+
+				fout.close();
+				zis.closeEntry();
+			}
+			zis.close();
+		} catch(IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+
+		return true;
+	}
+
 	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
 	    public void onReceive(Context context, Intent intent) {
 	        String action = intent.getAction();
@@ -301,7 +386,7 @@ public class MainActivity extends Activity {
 	        	final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
 
 	        	if (state == BluetoothAdapter.STATE_ON) {
-	        		showToast("Enabled");
+	        		showToast("BT Enabled");
 
 	        		showEnabled();
 				}
@@ -323,7 +408,7 @@ public class MainActivity extends Activity {
 	        	mDeviceList.add(device);
 
 				// Moment gdy znajduje sie nowe urządzenie BT
-
+				tryToOpenFile(device.getName());
 	        	showToast("Found device " + device.getName());
 	        }
 	    }
@@ -336,15 +421,14 @@ public class MainActivity extends Activity {
 			for(int i = 0; i < wifiScanList.size(); i++){
 				if ( (wifiScanList.get(i)).toString() == "Ruter Sruter Dd") {
 					showToast("Found mDevice");
-
 				} else {
 					showToast("No mDevices found");
 				}
 			}
-			//lv.setAdapter(new ArrayAdapter<String>(getApplicationContext(),android.R.layout.simple_list_item_1,wifis));
 		}
 	}
 
+	// Klasa zajmujaca sie pobieraniem
 	private class DownloadTask extends AsyncTask<String, Integer, String> {
 
 		private Context context;
