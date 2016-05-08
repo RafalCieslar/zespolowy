@@ -25,6 +25,7 @@ import android.content.IntentFilter;
 import android.os.StrictMode;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.webkit.WebView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
@@ -40,6 +41,7 @@ public class MainActivity extends Activity {
     private TextView text;
     private BluetoothAdapter myBluetoothAdapter;
     private Button updateBtn;
+    private WebView webView;
 
     private ListView myListView;
     private ArrayAdapter<String> BTArrayAdapter;
@@ -52,10 +54,6 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
-                .permitAll().build();
-        StrictMode.setThreadPolicy(policy);
 
         // define ESignboard's Mac Adresses
         eSignboardDevices.add("00:1A:7D:DA:71:07");
@@ -118,6 +116,8 @@ public class MainActivity extends Activity {
                     checkForUpdate();
                 }
             });
+
+            webView = (WebView)findViewById(R.id.webView);
         }
     }
 
@@ -166,18 +166,23 @@ public class MainActivity extends Activity {
     };
 
 
+
     class WifiReceiver extends BroadcastReceiver {
         public void onReceive(Context c, Intent intent) {
             if (myWifiManager.isWifiEnabled() && !(myWifiManager.getConnectionInfo().getSSID().equals("\"ESignboard\""))) {
                 List<ScanResult> wifiScanList = myWifiManager.getScanResults();
                 for (ScanResult result : wifiScanList) {
                     if (result.SSID.equals("ESignboard")) {
-                        notyfikuj("mDevice in range!", "Connect to this network if you want to check for updates.");
+                        notyfikuj("mDevice in range!", "Connect to this network if you want to check for update.");
                     }
                 }
             }
+            // Tutaj mozna dodac automatyczny update
+            // if (myWifiManager.isWifiEnabled() && (myWifiManager.getConnectionInfo().getSSID().equals("\"ESignboard\"")))
         }
     }
+
+
 
     public void checkForUpdate() {
         if (myWifiManager.isWifiEnabled() && myWifiManager.getConnectionInfo().getSSID().equals("\"ESignboard\"")) {
@@ -186,9 +191,6 @@ public class MainActivity extends Activity {
                 File local_checksum = new File(getFilesDir().toString() + "/esignboard_data_checksum.bin");
                 URL url1 = new URL("http://192.168.0.1/esignboard_data_checksum");
                 URL url2 = new URL("file:///" + this.getFilesDir().toString() + "/esignboard_data_checksum.bin");
-
-                Toast.makeText(getApplicationContext(),local_checksum.getPath().toString(),
-                        Toast.LENGTH_LONG).show();
 
                 if (local_checksum.exists()) {
                     BufferedReader mdevice = new BufferedReader(new InputStreamReader(url1.openStream()));
@@ -210,9 +212,10 @@ public class MainActivity extends Activity {
                 }
 
                 if (update) {
-                    final DownloadTask downloadTask = new DownloadTask(this);
-                    downloadTask.execute("http://192.168.0.1/esignboard_data_checksum");
-                    downloadTask.execute("http://192.168.0.1/esignboard_data.zip");
+                    final DownloadTask downloadSum = new DownloadTask(this);
+                    final DownloadTask downloadZip = new DownloadTask(this);
+                    downloadSum.execute("http://192.168.0.1/esignboard_data_checksum");
+                    downloadZip.execute("http://192.168.0.1/esignboard_data.zip");
                 } else {
                     Toast.makeText(getApplicationContext(),"Dane sa aktualne!",
                             Toast.LENGTH_LONG).show();
@@ -226,6 +229,8 @@ public class MainActivity extends Activity {
         }
     }
 
+
+
     public void find(View view) {
         if (myBluetoothAdapter.isDiscovering()) {
             // the button is pressed when it discovers, so cancel the discovery
@@ -238,7 +243,9 @@ public class MainActivity extends Activity {
             registerReceiver(bReceiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
         }
     }
-    //a
+
+
+
     public void notyfikuj(String title,String message)
     {
         Intent intent = new Intent();

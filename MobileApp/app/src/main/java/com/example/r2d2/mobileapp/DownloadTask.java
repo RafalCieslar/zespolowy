@@ -6,12 +6,17 @@ import android.os.PowerManager;
 import android.webkit.URLUtil;
 import android.widget.Toast;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * Created by Macie_000 on 2016-05-08.
@@ -21,7 +26,7 @@ class DownloadTask extends AsyncTask<String, Integer, String> {
 
     private Context context;
     private PowerManager.WakeLock mWakeLock;
-    private String name = null;
+    private String path = null;
 
     DownloadTask(MainActivity context) {
         this.context = context;
@@ -50,8 +55,8 @@ class DownloadTask extends AsyncTask<String, Integer, String> {
 
             // download the file
             input = connection.getInputStream();
-            output = new FileOutputStream(context.getFilesDir().toString() + "/" + URLUtil.guessFileName(url.toString(), null, null));
-            name = context.getFilesDir().toString() + "/" + URLUtil.guessFileName(url.toString(), null, null);
+            path = context.getFilesDir().toString() + "/" + URLUtil.guessFileName(url.toString(), null, null);
+            output = new FileOutputStream(path);
             byte data[] = new byte[4096];
             long total = 0;
             int count;
@@ -98,11 +103,57 @@ class DownloadTask extends AsyncTask<String, Integer, String> {
     @Override
     protected void onPostExecute(String result) {
         mWakeLock.release();
-        if (result != null)
-            Toast.makeText(context.getApplicationContext(),"Download error: "+result,
-                Toast.LENGTH_LONG).show();
-        else
-            Toast.makeText(context.getApplicationContext(),"File downloaded! "+name,
-                Toast.LENGTH_LONG).show();
+        if (result != null) {
+            Toast.makeText(context.getApplicationContext(), "Download error: " + result,
+                    Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(context.getApplicationContext(), "File downloaded! " + path,
+                    Toast.LENGTH_LONG).show();
+            if (path.equals(context.getFilesDir().toString() + "/esignboard_data.zip")) {
+                unpackZip(context.getFilesDir().toString(), "esignboard_data.zip");
+            }
+        }
+    }
+
+    private boolean unpackZip(String path, String zipname)
+    {
+        InputStream is;
+        ZipInputStream zis;
+        try
+        {
+            String filename;
+            is = new FileInputStream(path + "/" + zipname);
+            zis = new ZipInputStream(new BufferedInputStream(is));
+            ZipEntry ze;
+            byte[] buffer = new byte[1024];
+            int count;
+
+            while ((ze = zis.getNextEntry()) != null)
+            {
+                filename = ze.getName();
+
+                if (ze.isDirectory()) {
+                    File fmd = new File(path + "/" + filename);
+                    fmd.mkdirs();
+                    continue;
+                }
+
+                FileOutputStream fout = new FileOutputStream(path + "/" + filename);
+
+                while ((count = zis.read(buffer)) != -1)
+                {
+                    fout.write(buffer, 0, count);
+                }
+
+                fout.close();
+                zis.closeEntry();
+            }
+            zis.close();
+        } catch(IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
     }
 }
