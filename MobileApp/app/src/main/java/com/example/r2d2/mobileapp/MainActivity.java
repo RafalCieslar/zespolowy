@@ -107,7 +107,6 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         registerReceiver(myWifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
-        myWifiManager.startScan();
         super.onResume();
     }
 
@@ -146,15 +145,22 @@ public class MainActivity extends Activity {
 
     class WifiReceiver extends BroadcastReceiver {
         public void onReceive(Context c, Intent intent) {
-            List<ScanResult> wifiScanList = myWifiManager.getScanResults();
-            for (ScanResult result : wifiScanList){
-                if (result.SSID.equals("Ruter Sruter Dd")){
-                    notyfikuj("mDevice in range!", "");
+            if (myWifiManager.isWifiEnabled() && !(myWifiManager.getConnectionInfo().getSSID().equals("\"ESignboard\""))) {
+                List<ScanResult> wifiScanList = myWifiManager.getScanResults();
+                for (ScanResult result : wifiScanList) {
+                    if (result.SSID.equals("ESignboard")) {
+                        notyfikuj("mDevice in range!", "Connect to this network if you want to check for updates.");
+                    }
                 }
             }
         }
     }
 
+    public void checkForUpdate() {
+        if (myWifiManager.isWifiEnabled() && myWifiManager.getConnectionInfo().getSSID().equals("\"ESignboard\"")) {
+            
+        }
+    }
 
     public void find(View view) {
         if (myBluetoothAdapter.isDiscovering()) {
