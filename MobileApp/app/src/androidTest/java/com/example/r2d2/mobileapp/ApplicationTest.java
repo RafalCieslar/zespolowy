@@ -1,4 +1,4 @@
-package e_signboard.mobileapp;
+package com.example.r2d2.mobileapp;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
