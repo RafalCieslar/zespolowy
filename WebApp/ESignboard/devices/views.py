@@ -1,9 +1,20 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import Http404, JsonResponse, HttpResponse
 import zipfile
+from hashlib import md5
 
 from .models import Device, Poi
 from django.core.urlresolvers import reverse
+
+# tego zdecydowanie tutaj nie powinno być
+
+
+def generate_md5(fname):
+    hash_md5 = md5()
+    with open(fname, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
 
 # Create your views here.
 
@@ -24,15 +35,19 @@ def update(request, device_id):
 def download(request, device_id):
     mdevice = get_object_or_404(Device, pk=device_id)
     pois = Poi.objects.filter(parent_device__in=[mdevice.id])
-    zip = zipfile.ZipFile('update.zip', mode='w')
+    zip_file = zipfile.ZipFile('files/'+str(mdevice.id)+'/update.zip', mode='w')
     for poi in pois:
-        zip.write(poi.uuid + ".html")
-        zip.write(poi.uuid + ".jpg")
-    zip.close()
+        zip_file.write('files/'+str(mdevice.id)+'/'+poi.uuid + '.html')
+        zip_file.write('files/'+str(mdevice.id)+'/'+poi.uuid + '.jpg')
+    zip_file.close()
 
-    response = HttpResponse(zip, content_type='application/force-download')
-    response['Content-Disposition'] = 'attachment; filename="%s"' % 'update.zip'
-    return response
+    mdevice.hash = generate_md5('files/'+str(mdevice.id)+'/update.zip')
+    mdevice.save()
+    
+    zip_file = open('files/'+str(mdevice.id)+'/update.zip', 'r')
+    #response = HttpResponse(zip_file, content_type='application/force-download')
+    #response['Content-Disposition'] = 'attachment; filename="%s"' % 'update.zip'
+    #return response
 
 
 def poi_view(request, device_id):
