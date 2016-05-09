@@ -2,6 +2,7 @@ package com.example.r2d2.mobileapp;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.res.AssetManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -13,16 +14,14 @@ import android.content.Context;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.StrictMode;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.webkit.WebView;
@@ -41,22 +40,34 @@ public class MainActivity extends Activity {
     private TextView text;
     private BluetoothAdapter myBluetoothAdapter;
     private Button updateBtn;
-    private WebView webView;
+
 
     private ListView myListView;
     private ArrayAdapter<String> BTArrayAdapter;
     private HashSet<String> eSignboardDevices  = new HashSet<String>();
 
+
     private WifiManager myWifiManager;
     private WifiReceiver myWifiReceiver;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // define ESignboard's Mac Adresses
-        eSignboardDevices.add("00:1A:7D:DA:71:07");
+        //get list of  devices defined in fcking asset folder
+        AssetManager assetManager = getApplicationContext().getAssets();
+        try {
+            for (String file : assetManager.list("")) {
+                if (file.endsWith(".html"))
+                    eSignboardDevices.add(file.replaceAll(".html", ""));
+            }
+        } catch (IOException e) {
+
+            e.printStackTrace();
+        }
 
         // connect to Wifi Manager and start discovering
         myWifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
@@ -116,8 +127,6 @@ public class MainActivity extends Activity {
                     checkForUpdate();
                 }
             });
-
-            webView = (WebView)findViewById(R.id.webView);
         }
     }
 
@@ -146,7 +155,6 @@ public class MainActivity extends Activity {
     }
 
 
-
     final BroadcastReceiver bReceiver = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
@@ -158,8 +166,11 @@ public class MainActivity extends Activity {
                 BTArrayAdapter.add(device.getName() + "\n" + device.getAddress());
                 BTArrayAdapter.notifyDataSetChanged();
 
-                if(eSignboardDevices.contains(device.getAddress())){
+                if(eSignboardDevices.contains(device.getName())){
                     notyfikuj("ESignboard in range!", "");
+                    Intent intent2 = new Intent(getApplicationContext(),HtmlDsplay.class);
+                    intent2.putExtra("device-name",device.getName());
+                    startActivity(intent2);
                 }
             }
         }
@@ -181,15 +192,14 @@ public class MainActivity extends Activity {
             // if (myWifiManager.isWifiEnabled() && (myWifiManager.getConnectionInfo().getSSID().equals("\"ESignboard\"")))
         }
     }
-
-
-
     public void checkForUpdate() {
         if (myWifiManager.isWifiEnabled() && myWifiManager.getConnectionInfo().getSSID().equals("\"ESignboard\"")) {
             boolean update = false;
             try {
                 File local_checksum = new File(getFilesDir().toString() + "/esignboard_data_checksum.bin");
-                URL url1 = new URL("http://192.168.0.1/esignboard_data_checksum");
+
+                //-----------zamiana http://192.168.0.1 na http://mdevice
+                URL url1 = new URL("http://mdevice/esignboard_data_checksum");
                 URL url2 = new URL("file:///" + this.getFilesDir().toString() + "/esignboard_data_checksum.bin");
 
                 if (local_checksum.exists()) {
@@ -214,8 +224,10 @@ public class MainActivity extends Activity {
                 if (update) {
                     final DownloadTask downloadSum = new DownloadTask(this);
                     final DownloadTask downloadZip = new DownloadTask(this);
-                    downloadSum.execute("http://192.168.0.1/esignboard_data_checksum");
-                    downloadZip.execute("http://192.168.0.1/esignboard_data.zip");
+
+                    //-----------zamiana http://192.168.0.1 na http://mdevice
+                    downloadSum.execute("http://mdevice/esignboard_data_checksum");
+                    downloadZip.execute("http://mdevice/esignboard_data.zip");
                 } else {
                     Toast.makeText(getApplicationContext(),"Dane sa aktualne!",
                             Toast.LENGTH_LONG).show();

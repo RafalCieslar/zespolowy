@@ -122,6 +122,7 @@ class DownloadTask extends AsyncTask<String, Integer, String> {
         try
         {
             String filename;
+            // is = new FileInputStream(path + "/" + zipname);
             is = new FileInputStream(path + "/" + zipname);
             zis = new ZipInputStream(new BufferedInputStream(is));
             ZipEntry ze;
@@ -138,7 +139,7 @@ class DownloadTask extends AsyncTask<String, Integer, String> {
                     continue;
                 }
 
-                FileOutputStream fout = new FileOutputStream(path + "/" + filename);
+                FileOutputStream fout = new FileOutputStream("file:///android_asset/");
 
                 while ((count = zis.read(buffer)) != -1)
                 {
