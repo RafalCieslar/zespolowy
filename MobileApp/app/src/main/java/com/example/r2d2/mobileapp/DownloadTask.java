@@ -139,7 +139,7 @@ class DownloadTask extends AsyncTask<String, Integer, String> {
                     continue;
                 }
 
-                FileOutputStream fout = new FileOutputStream("file:///android_asset/");
+                FileOutputStream fout = new FileOutputStream(path + "/" +filename);
 
                 while ((count = zis.read(buffer)) != -1)
                 {
