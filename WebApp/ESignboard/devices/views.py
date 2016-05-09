@@ -8,3 +8,4 @@ def dashboard(request):
     if not request.user.is_authenticated():
         return redirect('user:login')
     return render(request, 'devices/dashboard.html')
+
