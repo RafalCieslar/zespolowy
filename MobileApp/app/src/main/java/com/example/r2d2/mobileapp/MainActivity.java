@@ -22,6 +22,8 @@ import java.util.List;
 
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.os.Environment;
+import android.os.StrictMode;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.webkit.WebView;
@@ -35,6 +37,8 @@ import com.example.bluetoothexample.R;
 public class MainActivity extends Activity {
 
     private static final int REQUEST_ENABLE_BT = 1;
+
+
 
     private Button findBtn;
     private TextView text;
@@ -57,17 +61,27 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                .permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
         //get list of  devices defined in fcking asset folder
-        AssetManager assetManager = getApplicationContext().getAssets();
-        try {
-            for (String file : assetManager.list("")) {
+
+            for (String file : getFilesDir().list()) {
                 if (file.endsWith(".html"))
                     eSignboardDevices.add(file.replaceAll(".html", ""));
             }
-        } catch (IOException e) {
 
-            e.printStackTrace();
-        }
+
+        //CIESLAR TU SO WSZYSTKIE PLIKI
+        //String f = getFilesDir().toString()+"/";
+//
+//        File yourDir = new File(getFilesDir().);
+//        for (File f : yourDir.listFiles()) {
+//            if (f.isFile())
+//               eSignboardDevices.add(f.getName().replaceAll(".html",""));
+//            // make something with the name
+//        }
 
         // connect to Wifi Manager and start discovering
         myWifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
@@ -197,6 +211,8 @@ public class MainActivity extends Activity {
             boolean update = false;
             try {
                 File local_checksum = new File(getFilesDir().toString() + "/esignboard_data_checksum.bin");
+
+
 
                 //-----------zamiana http://192.168.0.1 na http://mdevice
                 URL url1 = new URL("http://mdevice/esignboard_data_checksum");
