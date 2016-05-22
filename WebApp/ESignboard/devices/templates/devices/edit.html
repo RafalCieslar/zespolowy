@@ -2,9 +2,18 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>E-Signboard - edycja POI</title>
 </head>
 <body>
-
+<h1>Edycja POI</h1>
+<form method="POST"  enctype="multipart/form-data">
+    {% csrf_token %}
+	<br>
+    {{ form.bb_text }}
+	<br>
+	{{ form.image }}
+    <p><input type="submit" value="edytuj" /></p>
+	{{ message }}
+</form>
 </body>
 </html>
