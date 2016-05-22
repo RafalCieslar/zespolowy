@@ -26,9 +26,12 @@ import android.os.Environment;
 import android.os.StrictMode;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.Window;
+import android.view.WindowManager;
 import android.webkit.WebView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,9 +47,9 @@ public class MainActivity extends Activity {
     private TextView text;
     private BluetoothAdapter myBluetoothAdapter;
     private Button updateBtn;
+    ImageView image;
 
 
-    private ListView myListView;
     private ArrayAdapter<String> BTArrayAdapter;
     private HashSet<String> eSignboardDevices  = new HashSet<String>();
 
@@ -60,16 +63,18 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        image = (ImageView) findViewById(R.id.imageView);
+        image.setImageResource(R.drawable.ulotka);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
                 .permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
+
         //get list of  devices defined in fcking asset folder
 
+            eSignboardDevices.add("002258E322DD");
             for (String file : getFilesDir().list()) {
-                if (file.endsWith(".html"))
-                    eSignboardDevices.add(file.replaceAll(".html", ""));
+                    eSignboardDevices.add(file.split(".")[0]);
             }
 
 
@@ -125,12 +130,10 @@ public class MainActivity extends Activity {
                 }
             });
 
-            myListView = (ListView)findViewById(R.id.listView1);
+
 
             // create the arrayAdapter that contains the BTDevices, and set it to the ListView
             BTArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-
-            myListView.setAdapter(BTArrayAdapter);
 
             updateBtn = (Button)findViewById(R.id.update);
             updateBtn.setOnClickListener(new OnClickListener() {
@@ -177,13 +180,13 @@ public class MainActivity extends Activity {
                 // Get the BluetoothDevice object from the Intent
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 // add the name and the MAC address of the object to the arrayAdapter
-                BTArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+                BTArrayAdapter.add(device.getAddress().replace(":",""));
                 BTArrayAdapter.notifyDataSetChanged();
 
-                if(eSignboardDevices.contains(device.getName())){
+                if(eSignboardDevices.contains(device.getAddress().replace(":",""))){
                     notyfikuj("ESignboard in range!", "");
                     Intent intent2 = new Intent(getApplicationContext(),HtmlDsplay.class);
-                    intent2.putExtra("device-name",device.getName());
+                    intent2.putExtra("device-name",device.getAddress().replace(":",""));
                     startActivity(intent2);
                 }
             }
@@ -224,7 +227,7 @@ public class MainActivity extends Activity {
                     String str1, str2;
                     while ((str1 = mdevice.readLine()) != null && (str2 = local.readLine()) != null) {
                         if (!str1.equals(str2)) {
-                            Toast.makeText(getApplicationContext(),"Pliki sie roznia!",
+                            Toast.makeText(getApplicationContext(),"New version available",
                                     Toast.LENGTH_LONG).show();
                             update = true;
                         }
@@ -232,7 +235,7 @@ public class MainActivity extends Activity {
                     mdevice.close();
                     local.close();
                 } else {
-                    Toast.makeText(getApplicationContext(),"Nie ma lokalnego pliku!",
+                    Toast.makeText(getApplicationContext(),"No local file!",
                             Toast.LENGTH_LONG).show();
                     update = true;
                 }
@@ -245,7 +248,7 @@ public class MainActivity extends Activity {
                     downloadSum.execute("http://mdevice/esignboard_data_checksum");
                     downloadZip.execute("http://mdevice/esignboard_data.zip");
                 } else {
-                    Toast.makeText(getApplicationContext(),"Dane sa aktualne!",
+                    Toast.makeText(getApplicationContext(),"Data are up to date",
                             Toast.LENGTH_LONG).show();
                 }
             } catch (IOException e) {
@@ -265,6 +268,8 @@ public class MainActivity extends Activity {
             myBluetoothAdapter.cancelDiscovery();
         }
         else {
+            Toast.makeText(getApplicationContext(),"Searching in progres",
+                    Toast.LENGTH_LONG).show();
             BTArrayAdapter.clear();
             myBluetoothAdapter.startDiscovery();
 

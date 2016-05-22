@@ -1,0 +1,5 @@
+*.pyc
+*.pyc
+WebApp/ESignboard/ESignboard/__pycache__/settings.cpython-34.pyc
+*.pyc
+WebApp/ESignboard/devices/__pycache__/models.cpython-34.pyc

@@ -1,4 +1,5 @@
-def handle_uploaded_file(f):
-    with open('some/file/name.txt', 'wb+') as destination:
-        for chunk in f.chunks():
-            destination.write(chunk)
+def handlefile(f, path):
+    destination = open(path + "/file.jpg", 'wb+') 
+    for chunk in f.chunks():
+        destination.write(chunk)
+    destination.close()
