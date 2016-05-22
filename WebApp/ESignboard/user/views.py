@@ -21,6 +21,9 @@ def login(request):
     else:
         message = ''
 
+    if request.user.is_authenticated():
+        return redirect('devices:dashboard')
+
     return render(request, 'user/login.html', {
         'form': AuthenticationForm,
         'message': message,
@@ -41,6 +44,9 @@ def register(request):
     else:
         form = UserCreationForm()
         message = ''
+
+    if request.user.is_authenticated():
+        return redirect('devices:dashboard')
 
     #form = RegisterForm()
     return render(request, 'user/register.html', {
