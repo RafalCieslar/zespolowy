@@ -20,7 +20,7 @@ public class HtmlDsplay extends Activity {
         localWebView.getSettings().setJavaScriptEnabled(true);
         Toast.makeText(getApplicationContext(),deviceName ,
                 Toast.LENGTH_LONG).show();
-        localWebView.loadUrl("file:///"+getFilesDir()+"/"+deviceName+".html"); //new.html is html file name.
+        localWebView.loadUrl("file:///"+getFilesDir()+"/"+deviceName+ "/index.html"); //new.html is html file name.
     }
 
 }
