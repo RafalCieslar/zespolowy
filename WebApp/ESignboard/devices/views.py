@@ -29,21 +29,21 @@ def dashboard(request):
 
 def update(request, device_id):
     mdevice = get_object_or_404(Device, pk=device_id)
+    pois = Poi.objects.filter(parent_device__in=[mdevice.id])
+    zip_file = zipfile.ZipFile('files/' + str(mdevice.id) + '/update.zip', mode='w')
+    for poi in pois:
+        zip_file.write('files/' + str(mdevice.id) + '/' + poi.uuid + '/index.html', poi.uuid + '/index.html')
+        zip_file.write('files/' + str(mdevice.id) + '/' + poi.uuid + '/file.jpg', poi.uuid + '/file.jpg')
+    zip_file.close()
+
+    mdevice.hash = generate_md5('files/' + str(mdevice.id) + '/update.zip')
+    mdevice.save()
+
     return JsonResponse({'data_checksum': mdevice.hash})
 
 
 def download(request, device_id):
     mdevice = get_object_or_404(Device, pk=device_id)
-    pois = Poi.objects.filter(parent_device__in=[mdevice.id])
-    zip_file = zipfile.ZipFile('files/'+str(mdevice.id)+'/update.zip', mode='w')
-    for poi in pois:
-        zip_file.write('files/'+str(mdevice.id)+'/'+poi.uuid + '/index.html', poi.uuid + '/index.html')
-        zip_file.write('files/'+str(mdevice.id)+'/'+poi.uuid + '/file.jpg', poi.uuid + '/file.jpg')
-    zip_file.close()
-
-    mdevice.hash = generate_md5('files/'+str(mdevice.id)+'/update.zip')
-    mdevice.save()
-
     zip_file = open('files/'+str(mdevice.id)+'/update.zip', 'rb')
     response = HttpResponse(zip_file, content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename="%s"' % 'update.zip'
