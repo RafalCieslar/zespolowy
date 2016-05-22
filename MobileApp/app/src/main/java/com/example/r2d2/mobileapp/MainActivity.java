@@ -44,7 +44,6 @@ public class MainActivity extends Activity {
 
 
     private Button findBtn;
-    private TextView text;
     private BluetoothAdapter myBluetoothAdapter;
     private Button updateBtn;
     ImageView image;
@@ -65,6 +64,10 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         image = (ImageView) findViewById(R.id.imageView);
         image.setImageResource(R.drawable.ulotka);
+
+
+
+
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
                 .permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -72,9 +75,8 @@ public class MainActivity extends Activity {
 
         //get list of  devices defined in fcking asset folder
 
-            eSignboardDevices.add("002258E322DD");
             for (String file : getFilesDir().list()) {
-                    eSignboardDevices.add(file.split(".")[0]);
+                    eSignboardDevices.add(file.toUpperCase());
             }
 
 
@@ -98,8 +100,6 @@ public class MainActivity extends Activity {
         myBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if(myBluetoothAdapter == null) {
 
-            text.setText("Status: not supported");
-
             Toast.makeText(getApplicationContext(),"Your device does not support Bluetooth",
                     Toast.LENGTH_LONG).show();
         } else {
@@ -118,7 +118,7 @@ public class MainActivity extends Activity {
             }
 
 
-            text = (TextView) findViewById(R.id.text);
+
 
             findBtn = (Button)findViewById(R.id.search);
             findBtn.setOnClickListener(new OnClickListener() {
@@ -164,9 +164,10 @@ public class MainActivity extends Activity {
         // TODO Auto-generated method stub
         if(requestCode == REQUEST_ENABLE_BT){
             if(myBluetoothAdapter.isEnabled()) {
-                text.setText("Status: Enabled");
+
+                Toast.makeText(MainActivity.this, "BT Enabled", Toast.LENGTH_SHORT).show();
             } else {
-                text.setText("Status: Disabled");
+                Toast.makeText(MainActivity.this, "BT Disabled", Toast.LENGTH_SHORT).show();
             }
         }
     }
