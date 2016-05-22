@@ -37,17 +37,17 @@ def download(request, device_id):
     pois = Poi.objects.filter(parent_device__in=[mdevice.id])
     zip_file = zipfile.ZipFile('files/'+str(mdevice.id)+'/update.zip', mode='w')
     for poi in pois:
-        zip_file.write('files/'+str(mdevice.id)+'/'+poi.uuid + '.html')
-        zip_file.write('files/'+str(mdevice.id)+'/'+poi.uuid + '.jpg')
+        zip_file.write('files/'+str(mdevice.id)+'/'+poi.uuid + '/index.html', poi.uuid + '/index.html')
+        zip_file.write('files/'+str(mdevice.id)+'/'+poi.uuid + '/file.jpg', poi.uuid + '/file.jpg')
     zip_file.close()
 
     mdevice.hash = generate_md5('files/'+str(mdevice.id)+'/update.zip')
     mdevice.save()
-    
-    zip_file = open('files/'+str(mdevice.id)+'/update.zip', 'r')
-    #response = HttpResponse(zip_file, content_type='application/force-download')
-    #response['Content-Disposition'] = 'attachment; filename="%s"' % 'update.zip'
-    #return response
+
+    zip_file = open('files/'+str(mdevice.id)+'/update.zip', 'rb')
+    response = HttpResponse(zip_file, content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename="%s"' % 'update.zip'
+    return response
 
 
 def poi_view(request, device_id):
