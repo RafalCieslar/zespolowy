@@ -1,7 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
-from django.contrib.auth import authenticate, login as auth_login
+from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 # Create your views here.
 
 
@@ -47,3 +47,7 @@ def register(request):
         'form': form,
         'message': message,
     })
+
+def logout(request):
+    auth_logout(request)
+    return redirect('main:index')
