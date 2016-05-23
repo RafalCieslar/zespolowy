@@ -10,7 +10,9 @@
     {% ifequal message "Sukces!" %}
     <div class="alert alert-success">{{ message }}</div>
     {% else %}
-    <div class="alert alert-danger">{{ message }}</div>
+    <div class="alert alert-danger">
+        {{ message }}
+    </div>
     {% endifequal %}
 {% endif %}
 <form role="form" method="POST" enctype="multipart/form-data" action="">

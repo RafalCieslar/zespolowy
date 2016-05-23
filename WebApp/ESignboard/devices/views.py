@@ -5,7 +5,7 @@ from django.http import Http404, JsonResponse, HttpResponse
 import zipfile
 from hashlib import md5
 
-from .forms import POIform, MDeviceform
+from .forms import POIform#, MDeviceform
 
 from .models import Device, Poi
 from .checkpath import checkpath
@@ -88,6 +88,10 @@ def poi_edit(request, device_id):
     if request.method == 'POST':
         form = POIform(request.POST, request.FILES)
         if form.is_valid():
+            vPoi.uuid = form.cleaned_data['uuid']
+            vPoi.name = form.cleaned_data['name']
+            vPoi.save()
+
             picture = form.cleaned_data['image']
             w, h = get_image_dimensions(picture)
             if h > 600:
@@ -107,6 +111,8 @@ def poi_edit(request, device_id):
                 renderfile.close()
                 # message = "Sukces!"
                 return redirect('devices:dashboard')
+        else:
+            message = form.errors
     else:
         form = POIform(initial={'name': vPoi.name, 'uuid': vPoi.uuid})
     return render(request, 'devices/edit.html', {'form': form, 'message': message})
@@ -121,3 +127,13 @@ def mdevice_view(request, device_id):
     return render(request, 'devices/view.html')
 
 
+def mdevice_edit(request, device_id):
+    if not request.user.is_authenticated():
+        return redirect('user:login')
+    device = get_object_or_404(Device, pk=device_id)
+    if not device.objects.filter(owners__in=request.user.id).exists():
+        return Http404
+    #
+    # form = MDeviceform(device)
+    # message = ""
+    return render(request, 'devices/edit.html')
