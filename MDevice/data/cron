@@ -1,0 +1,2 @@
+@reboot /mdevice/check-update.sh > /mdevice/boot-check-update.log 2>&1 && /mdevice/deamon.sh > /mdevice/log-deamon.log 2>&1
+*/5 * * * * /mdevice/update-data.sh > /mdevice/log-update-data.log 2>&1

@@ -38,7 +38,10 @@ sleep 10 # Wait for wlan0 interface
 
 if [ -f /mdevice/first_run ]; then
     /mdevice/first-run.sh
-    rm /mdevice/first_run
+fi
+
+if [ -f /mdevice/first_run ]; then
+    exit 1
 fi
 
 /mdevice/update-data.sh

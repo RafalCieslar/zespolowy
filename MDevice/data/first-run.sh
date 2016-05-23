@@ -1,6 +1,8 @@
 #!/bin/bash
 
-/mdevice/connect-to-wifi.sh "Andrzej Wajda" srawopony#2137
+#ssid=`cat /mdevice/update_network_ssid`
+#pass=`cat /mdevice/update_network_password`
+#/mdevice/connect-to-wifi.sh "$ssid" "$pass"
 sleep 10
 apt-get update
 locale-gen
@@ -12,3 +14,5 @@ source /mdevice/venv/bin/activate
 pip3 install requests
 deactivate
 /mdevice/install-access-point.sh
+crontab -l 2>/dev/null; cat - /mdevice/cron | crontab -
+rm /mdevice/first_run
