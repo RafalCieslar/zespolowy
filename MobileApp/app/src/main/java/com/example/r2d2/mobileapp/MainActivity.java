@@ -24,6 +24,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Environment;
 import android.os.StrictMode;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
@@ -41,7 +42,7 @@ public class MainActivity extends Activity {
 
     private static final int REQUEST_ENABLE_BT = 1;
 
-
+    //moj pc: 001a7dda71
 
     private Button findBtn;
     private BluetoothAdapter myBluetoothAdapter;
@@ -75,11 +76,32 @@ public class MainActivity extends Activity {
 
         //get list of  devices defined in fcking asset folder
 
-            for (String file : getFilesDir().list()) {
-                    eSignboardDevices.add(file.toUpperCase());
+//            for (File file : getFilesDir().listFiles()) {
+//
+//                    if(file.isDirectory()) {
+//                        eSignboardDevices.add(file.getName());
+//                    }
+//            }
+        //v2
+        String path = getFilesDir().toString();
+
+        File mediaDir = new File(getFilesDir().toString()+"/001A7DDA7107");
+        if (!mediaDir.exists()){
+            mediaDir.mkdir();
+        }
+        File f = new File(path);
+        File[] files = f.listFiles();
+
+        for (File inFile : files) {
+            if (inFile.isDirectory()) {
+                // is directory
+                eSignboardDevices.add(inFile.getName().toUpperCase());
             }
+        }
 
 
+
+           // eSignboardDevices.add("001A7DDA7107");
         //CIESLAR TU SO WSZYSTKIE PLIKI
         //String f = getFilesDir().toString()+"/";
 //
@@ -246,7 +268,7 @@ public class MainActivity extends Activity {
                     final DownloadTask downloadZip = new DownloadTask(this);
 
                     //-----------zamiana http://192.168.0.1 na http://mdevice
-                    downloadSum.execute("http://mdevice/esignboard_data_checksum");
+                   downloadSum.execute("http://mdevice/esignboard_data_checksum");
                     downloadZip.execute("http://mdevice/esignboard_data.zip");
                 } else {
                     Toast.makeText(getApplicationContext(),"Data are up to date",
