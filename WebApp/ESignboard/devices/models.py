@@ -23,7 +23,7 @@ class Poi(models.Model):
     # user = models.ForeignKey(User, on_delete=models.CASCADE)
     owners = models.ManyToManyField(User)
     parent_device = models.ForeignKey(Device, on_delete=models.CASCADE)
-    content = models.FileField(upload_to='files') #+parent_device_id+'/'+id
+    content = models.TextField()
     uuid = models.CharField(max_length=32)
 
     def __str__(self):

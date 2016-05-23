@@ -102,6 +102,8 @@ def poi_edit(request, device_id):
                 checkpath(path)
                 handlefile(picture, path)
                 bbtext = form.cleaned_data['bb_text']
+                vPoi.content = bbtext
+                vPoi.save()
                 rendered = bbcode.render_html(bbtext)
                 renderfile = open(path + "/index.html", "w")
                 renderfile.write(
@@ -114,7 +116,7 @@ def poi_edit(request, device_id):
         else:
             message = form.errors
     else:
-        form = POIform(initial={'name': vPoi.name, 'uuid': vPoi.uuid})
+        form = POIform(initial={'name': vPoi.name, 'uuid': vPoi.uuid, 'bb_text': vPoi.content})
     return render(request, 'devices/edit.html', {'form': form, 'message': message})
 
 
