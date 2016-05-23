@@ -1,13 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>E-Signboard</title>
-</head>
-<body>
-<h1>E-Signboard</h1>
-<p>Witaj na stronie głównej projektu E-Signboard.</p>
-<p><a href="{% url 'user:register' %}">Zarejestruj</a> | <a href="{% url 'user:login' %}">Zaloguj</a></p>
-<p><a href="{% url 'devices:dashboard' %}">Lista urządzeń</a> - ta strona wyświetli się tylko zalogowanemu użytkownikowi</p>
-</body>
-</html>
+{% extends 'main/base.html' %}
+
+{% block content %}
+<div class="jumbotron center">
+    <div class="container">
+        <h1>ESignboard</h1>
+        <p>Twoja cyfrowa witryna sklepowa</p>
+        <p><a class="btn btn-primary btn-lg" href="{% url 'user:register' %}" role="button">Dołącz już teraz &raquo;</a> lub zaloguj się w prawym górnym rogu ekranu</p>
+    </div>
+</div>
+{% endblock %}

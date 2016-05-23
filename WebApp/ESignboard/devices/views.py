@@ -5,7 +5,8 @@ from django.http import Http404, JsonResponse, HttpResponse
 import zipfile
 from hashlib import md5
 
-from .forms import POIform
+from .forms import POIform, MDeviceform
+
 from .models import Device, Poi
 from .checkpath import checkpath
 from .filehandler import handlefile
@@ -13,7 +14,6 @@ from django.core.urlresolvers import reverse
 import bbcode
 import os
 from .models import Device, Poi
-
 
 
 def generate_md5(fname):  # tego zdecydowanie tutaj nie powinno być
@@ -30,9 +30,11 @@ def generate_md5(fname):  # tego zdecydowanie tutaj nie powinno być
 def dashboard(request):
     if not request.user.is_authenticated():
         return redirect('user:login')
-    mdevices = Device.objects.filter(owners__in=[request.user.id])
-    pois = Poi.objects.filter(owners__in=[request.user.id])
-    return render(request, 'devices/dashboard.html')
+    context = dict()
+    context['mdevices'] = Device.objects.filter(owners__in=[request.user.id])
+    context['pois'] = Poi.objects.filter(owners__in=[request.user.id])
+    context['user'] = request.user
+    return render(request, 'devices/dashboard.html', context)
 
 
 def update(request, device_id):
@@ -72,7 +74,7 @@ def poi_view(request, device_id):
     if not device.objects.filter(owners__in=request.user.id).exists() \
             and device.mdevice.objects.filter(owner__in=request.user.id).exists():
         return Http404
-   
+
     return render(request, 'devices/view.html')
 
 
@@ -88,24 +90,26 @@ def poi_edit(request, device_id):
         if form.is_valid():
             picture = form.cleaned_data['image']
             w, h = get_image_dimensions(picture)
-            if w > 400 or h> 400:
-               message = "The image is "+ str(w)+" pixels wide and "+ str(h)+" pixels high. It must be 400x400 or lower"
+            if h > 600:
+                message = "Wysokość załączonego pliku to " + str(
+                    h) + " pikseli. Jego wysokość nie może być większa niż 600 pikseli"
             else:
-                path = "files/"+str(vPoi.parent_device.id) + "/" +vPoi.uuid;
+                path = "files/" + str(vPoi.parent_device.id) + "/" + vPoi.uuid
                 checkpath(path)
                 handlefile(picture, path)
-                bbtext =  form.cleaned_data['bb_text']
+                bbtext = form.cleaned_data['bb_text']
                 rendered = bbcode.render_html(bbtext)
-                renderfile = open(path+"/index.html", "w")
-                renderfile.write("<img src=file.jpg><br>\n")
+                renderfile = open(path + "/index.html", "w")
+                renderfile.write(
+                    '<html><body><img src="file.jpg" style="width: 100%; display: block; max-height: 600px;" /><p>')
                 renderfile.write(rendered)
+                renderfile.write('</p></body></html>')
                 renderfile.close()
-                message = "Success"
-       
+                # message = "Sukces!"
+                return redirect('devices:dashboard')
     else:
-        form = POIform();
-    return render(request, 'devices/edit.html',{'form': form, 'message' : message})
-
+        form = POIform(initial={'name': vPoi.name, 'uuid': vPoi.uuid})
+    return render(request, 'devices/edit.html', {'form': form, 'message': message})
 
 
 def mdevice_view(request, device_id):
@@ -116,14 +120,4 @@ def mdevice_view(request, device_id):
         return Http404
     return render(request, 'devices/view.html')
 
-
-def mdevice_edit(request, device_id):
-    
-    
-    if not request.user.is_authenticated():
-        return redirect('user:login')
-    device = get_object_or_404(Device, pk=device_id)
-    if not device.objects.filter(owners__in=request.user.id).exists():
-        return Http404
-    return render(request, 'devices/edit.html')
 
