@@ -1,8 +1,8 @@
-package com.example.r2d2.mobileapp;
+package com.esignboard;
+
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.content.res.AssetManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -22,27 +22,23 @@ import java.util.List;
 
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Environment;
 import android.os.StrictMode;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.Window;
-import android.view.WindowManager;
-import android.webkit.WebView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
-import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
-import com.example.bluetoothexample.R;
+
+import com.esignboard.R;
 
 public class MainActivity extends Activity {
 
     private static final int REQUEST_ENABLE_BT = 1;
 
     //moj pc: 001a7dda71
+    //maciek WinPhone: 48507368ca3a
+    //maciek PC: 419039111468
 
     private Button findBtn;
     private BluetoothAdapter myBluetoothAdapter;
@@ -68,7 +64,6 @@ public class MainActivity extends Activity {
 
 
 
-
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
                 .permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -83,23 +78,10 @@ public class MainActivity extends Activity {
 //                    }
 //            }
         //v2
-        String path = getFilesDir().toString();
-
-        File mediaDir = new File(getFilesDir().toString()+"/001A7DDA7107");
-        if (!mediaDir.exists()){
-            mediaDir.mkdir();
-        }
-        File f = new File(path);
-        File[] files = f.listFiles();
-
-        for (File inFile : files) {
-            if (inFile.isDirectory()) {
-                // is directory
-                eSignboardDevices.add(inFile.getName().toUpperCase());
-            }
-        }
 
 
+//        ten update listy folderow dałem do przycisku Search (do funkcji find)!
+        //updateFolderList();
 
            // eSignboardDevices.add("001A7DDA7107");
         //CIESLAR TU SO WSZYSTKIE PLIKI
@@ -138,7 +120,6 @@ public class MainActivity extends Activity {
                 Toast.makeText(getApplicationContext(),"Bluetooth is already on",
                         Toast.LENGTH_LONG).show();
             }
-
 
 
 
@@ -186,13 +167,13 @@ public class MainActivity extends Activity {
         // TODO Auto-generated method stub
         if(requestCode == REQUEST_ENABLE_BT){
             if(myBluetoothAdapter.isEnabled()) {
-
                 Toast.makeText(MainActivity.this, "BT Enabled", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(MainActivity.this, "BT Disabled", Toast.LENGTH_SHORT).show();
             }
         }
     }
+
 
 
     final BroadcastReceiver bReceiver = new BroadcastReceiver() {
@@ -208,7 +189,7 @@ public class MainActivity extends Activity {
 
                 if(eSignboardDevices.contains(device.getAddress().replace(":",""))){
                     notyfikuj("ESignboard in range!", "");
-                    Intent intent2 = new Intent(getApplicationContext(),HtmlDsplay.class);
+                    Intent intent2 = new Intent(getApplicationContext(),HtmlDisplay.class);
                     intent2.putExtra("device-name",device.getAddress().replace(":",""));
                     startActivity(intent2);
                 }
@@ -232,6 +213,27 @@ public class MainActivity extends Activity {
             // if (myWifiManager.isWifiEnabled() && (myWifiManager.getConnectionInfo().getSSID().equals("\"ESignboard\"")))
         }
     }
+
+
+
+    public void updateFolderList() {
+        String path = getFilesDir().toString();
+
+        eSignboardDevices.clear();
+        File f = new File(path);
+        File[] files = f.listFiles();
+        for (File inFile : files) {
+            if (inFile.isDirectory() && ! inFile.getName().equals("instant-run") ) {
+                // is directory (but not instant-run)
+                eSignboardDevices.add( inFile.getName().toUpperCase() );
+            }
+        }
+        Toast.makeText(getApplicationContext(), eSignboardDevices.toString() ,
+                Toast.LENGTH_LONG).show();
+    }
+
+
+
     public void checkForUpdate() {
         if (myWifiManager.isWifiEnabled() && myWifiManager.getConnectionInfo().getSSID().equals("\"ESignboard\"")) {
             boolean update = false;
@@ -268,7 +270,7 @@ public class MainActivity extends Activity {
                     final DownloadTask downloadZip = new DownloadTask(this);
 
                     //-----------zamiana http://192.168.0.1 na http://mdevice
-                   downloadSum.execute("http://mdevice/esignboard_data_checksum");
+                    downloadSum.execute("http://mdevice/esignboard_data_checksum");
                     downloadZip.execute("http://mdevice/esignboard_data.zip");
                 } else {
                     Toast.makeText(getApplicationContext(),"Data are up to date",
@@ -291,7 +293,8 @@ public class MainActivity extends Activity {
             myBluetoothAdapter.cancelDiscovery();
         }
         else {
-            Toast.makeText(getApplicationContext(),"Searching in progres",
+            updateFolderList();
+            Toast.makeText(getApplicationContext(),"Searching in progress",
                     Toast.LENGTH_LONG).show();
             BTArrayAdapter.clear();
             myBluetoothAdapter.startDiscovery();
@@ -325,7 +328,13 @@ public class MainActivity extends Activity {
     protected void onDestroy() {
         // TODO Auto-generated method stub
         super.onDestroy();
-        unregisterReceiver(bReceiver);
+        // gdy nie jest zerejestrowany jeszcze to sie sypal...
+        // a tak w sumie to gdyby go zarejestrowac w on create to by wyszukiwal chyba od poczatku
+        try {
+            unregisterReceiver(bReceiver);
+        } catch (RuntimeException re) {
+            re.toString();
+        }
         myBluetoothAdapter.disable();
         //   text.setText("Status: Disconnected");
 

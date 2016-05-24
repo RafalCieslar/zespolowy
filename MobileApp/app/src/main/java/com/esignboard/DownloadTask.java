@@ -1,4 +1,4 @@
-package com.example.r2d2.mobileapp;
+package com.esignboard;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -18,10 +18,9 @@ import java.net.URL;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-/**
- * Created by Macie_000 on 2016-05-08.
- */
-// Klasa zajmujaca sie pobieraniem
+import com.esignboard.R;
+
+// Klasa zajmujaca sie pobieraniem i wypakowywaniem
 class DownloadTask extends AsyncTask<String, Integer, String> {
 
     private Context context;
@@ -104,16 +103,16 @@ class DownloadTask extends AsyncTask<String, Integer, String> {
     protected void onPostExecute(String result) {
         mWakeLock.release();
         if (result != null) {
-            Toast.makeText(context.getApplicationContext(), "Download error: " + result,
+            Toast.makeText(context, "Download error: " + result,
                     Toast.LENGTH_LONG).show();
         } else {
-            Toast.makeText(context.getApplicationContext(), "File downloaded! " + path,
-                    Toast.LENGTH_LONG).show();
             if (path.equals(context.getFilesDir().toString() + "/esignboard_data.zip")) {
                 unpackZip(context.getFilesDir().toString(), "esignboard_data.zip");
             }
         }
     }
+
+
 
     private boolean unpackZip(String path, String zipname)
     {
@@ -122,7 +121,6 @@ class DownloadTask extends AsyncTask<String, Integer, String> {
         try
         {
             String filename;
-            // is = new FileInputStream(path + "/" + zipname);
             is = new FileInputStream(path + "/" + zipname);
             zis = new ZipInputStream(new BufferedInputStream(is));
             ZipEntry ze;
@@ -154,6 +152,9 @@ class DownloadTask extends AsyncTask<String, Integer, String> {
             e.printStackTrace();
             return false;
         }
+
+        Toast.makeText(context, "Update completed!",
+                Toast.LENGTH_LONG).show();
 
         return true;
     }

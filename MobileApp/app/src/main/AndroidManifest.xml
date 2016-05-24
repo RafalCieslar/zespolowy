@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.bluetoothexample"
+    package="com.esignboard"
     android:versionCode="1"
     android:versionName="1.0">
 
@@ -28,7 +28,7 @@
         android:label="ESignboard"
         android:theme="@android:style/Theme.Holo.Light">
         <activity
-            android:name="com.example.r2d2.mobileapp.MainActivity"
+            android:name="com.esignboard.MainActivity"
             android:label="ESignboard">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -37,7 +37,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.example.r2d2.mobileapp.HtmlDsplay"
+            android:name="com.esignboard.HtmlDisplay"
             android:label="@string/title_activity_htmli_dsplay"></activity>
     </application>
 
