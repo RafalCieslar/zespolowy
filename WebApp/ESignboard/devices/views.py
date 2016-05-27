@@ -6,8 +6,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.core.files.images import get_image_dimensions
 from django.http import Http404, JsonResponse, HttpResponse
 from .forms import POIform
-from .checkpath import checkpath
-from .filehandler import handlefile
+from .methods import checkpath, handlefile
 from .models import Device, Poi
 from hashlib import md5
 
@@ -109,6 +108,8 @@ def poi_edit(request, device_id):
                 renderfile.write(rendered)
                 renderfile.write('</p></body></html>')
                 renderfile.close()
+
+
                 # message = "Sukces!"
                 return redirect('devices:dashboard')
         else:
