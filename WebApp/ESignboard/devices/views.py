@@ -1,19 +1,15 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.core.files.images import get_image_dimensions
-from django import forms
-from django.http import Http404, JsonResponse, HttpResponse
 import zipfile
-from hashlib import md5
-
-from .forms import POIform#, MDeviceform
-
-from .models import Device, Poi
-from .checkpath import checkpath
-from .filehandler import handlefile
-from django.core.urlresolvers import reverse
 import bbcode
 import os
+import io
+from django.shortcuts import render, redirect, get_object_or_404
+from django.core.files.images import get_image_dimensions
+from django.http import Http404, JsonResponse, HttpResponse
+from .forms import POIform
+from .checkpath import checkpath
+from .filehandler import handlefile
 from .models import Device, Poi
+from hashlib import md5
 
 
 def generate_md5(fname):  # tego zdecydowanie tutaj nie powinno być
@@ -44,8 +40,10 @@ def update(request, device_id):
     zip_filename = 'update.zip'  # without trailing slash
     html_filename = '/index.html'  # with trailing slash
     img_filename = '/file.jpg'  # with trailing slash
+    temp_file = io.StringIO('readthis')
 
     zip_file = zipfile.ZipFile(files_dir + zip_filename, mode='w')
+    zip_file.writestr(temp_file.getvalue(), 'read')
     for poi in pois:
         if os.path.isfile(files_dir + poi.uuid + html_filename):
             zip_file.write(files_dir + poi.uuid + html_filename, poi.uuid + html_filename)
