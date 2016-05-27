@@ -1,4 +1,3 @@
-import zipfile
 import bbcode
 import os
 import io
@@ -6,18 +5,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.core.files.images import get_image_dimensions
 from django.http import Http404, JsonResponse, HttpResponse
 from .forms import POIform
-from .methods import checkpath, handlefile
+from .methods import checkpath, handlefile, createzip
 from .models import Device, Poi
 from hashlib import md5
-
-
-def generate_md5(fname):  # tego zdecydowanie tutaj nie powinno być
-    hash_md5 = md5()
-    with open(fname, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    return hash_md5.hexdigest()
-
 
 # Create your views here.
 
@@ -34,25 +24,6 @@ def dashboard(request):
 
 def update(request, device_id):
     mdevice = get_object_or_404(Device, pk=device_id)
-    pois = Poi.objects.filter(parent_device__in=[mdevice.id])
-    files_dir = 'files/' + str(mdevice.id) + '/'
-    zip_filename = 'update.zip'  # without trailing slash
-    html_filename = '/index.html'  # with trailing slash
-    img_filename = '/file.jpg'  # with trailing slash
-    temp_file = io.StringIO('readthis')
-
-    zip_file = zipfile.ZipFile(files_dir + zip_filename, mode='w')
-    zip_file.writestr(temp_file.getvalue(), 'read')
-    for poi in pois:
-        if os.path.isfile(files_dir + poi.uuid + html_filename):
-            zip_file.write(files_dir + poi.uuid + html_filename, poi.uuid + html_filename)
-        if os.path.isfile(files_dir + poi.uuid + html_filename):
-            zip_file.write(files_dir + poi.uuid + img_filename, poi.uuid + img_filename)
-    zip_file.close()
-
-    mdevice.hash = generate_md5('files/' + str(mdevice.id) + '/update.zip')
-    mdevice.save()
-
     return JsonResponse({'data_checksum': mdevice.hash})
 
 
@@ -109,6 +80,7 @@ def poi_edit(request, device_id):
                 renderfile.write('</p></body></html>')
                 renderfile.close()
 
+                createzip(vPoi)
 
                 # message = "Sukces!"
                 return redirect('devices:dashboard')
