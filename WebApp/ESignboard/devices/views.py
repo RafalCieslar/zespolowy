@@ -1,13 +1,10 @@
 import bbcode
-import os
-import io
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.files.images import get_image_dimensions
 from django.http import Http404, JsonResponse, HttpResponse
 from .forms import POIform
 from .methods import checkpath, handlefile, createzip
 from .models import Device, Poi
-from hashlib import md5
 
 # Create your views here.
 
