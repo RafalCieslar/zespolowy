@@ -48,27 +48,14 @@ class DownloadTask extends AsyncTask<String, Integer, String> {
                         + " " + connection.getResponseMessage();
             }
 
-            // this will be useful to display download percentage
-            // might be -1: server did not report the length
-            int fileLength = connection.getContentLength();
-
             // download the file
             input = connection.getInputStream();
             path = context.getFilesDir().toString() + "/" + URLUtil.guessFileName(url.toString(), null, null);
             output = new FileOutputStream(path);
             byte data[] = new byte[4096];
-            long total = 0;
+
             int count;
             while ((count = input.read(data)) != -1) {
-                // allow canceling with back button
-                if (isCancelled()) {
-                    input.close();
-                    return null;
-                }
-                total += count;
-                // publishing the progress....
-                if (fileLength > 0) // only if total length is known
-                    publishProgress((int) (total * 100 / fileLength));
                 output.write(data, 0, count);
             }
         } catch (Exception e) {
@@ -106,6 +93,8 @@ class DownloadTask extends AsyncTask<String, Integer, String> {
             Toast.makeText(context, "Download error: " + result,
                     Toast.LENGTH_LONG).show();
         } else {
+            Toast.makeText(context, path,
+                    Toast.LENGTH_LONG).show();
             if (path.equals(context.getFilesDir().toString() + "/esignboard_data.zip")) {
                 unpackZip(context.getFilesDir().toString(), "esignboard_data.zip");
             }
@@ -126,6 +115,9 @@ class DownloadTask extends AsyncTask<String, Integer, String> {
             ZipEntry ze;
             byte[] buffer = new byte[1024];
             int count;
+
+            Toast.makeText(context, "Update completed!",
+                    Toast.LENGTH_LONG).show();
 
             while ((ze = zis.getNextEntry()) != null)
             {
