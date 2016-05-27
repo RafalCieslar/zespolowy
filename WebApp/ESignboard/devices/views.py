@@ -115,7 +115,7 @@ def poi_edit(request, device_id):
             message = form.errors
     else:
         form = POIform(initial={'name': vPoi.name, 'uuid': vPoi.uuid, 'bb_text': vPoi.content})
-    return render(request, 'devices/edit.html', {'form': form, 'message': message})
+    return render(request, 'devices/poi.edit.html', {'form': form, 'message': message})
 
 
 def mdevice_edit(request, device_id):
