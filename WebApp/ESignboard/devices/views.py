@@ -118,15 +118,6 @@ def poi_edit(request, device_id):
     return render(request, 'devices/edit.html', {'form': form, 'message': message})
 
 
-def mdevice_view(request, device_id):
-    if not request.user.is_authenticated():
-        return redirect('user:login')
-    device = get_object_or_404(Device, pk=device_id)
-    if not device.objects.filter(owners__in=request.user.id).exists():
-        return Http404
-    return render(request, 'devices/view.html')
-
-
 def mdevice_edit(request, device_id):
     if not request.user.is_authenticated():
         return redirect('user:login')
