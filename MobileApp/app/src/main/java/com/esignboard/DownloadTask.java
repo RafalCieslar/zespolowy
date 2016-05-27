@@ -6,17 +6,15 @@ import android.os.PowerManager;
 import android.webkit.URLUtil;
 import android.widget.Toast;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+
+import net.lingala.zip4j.exception.ZipException;
+import net.lingala.zip4j.core.ZipFile;
 
 import com.esignboard.R;
 
@@ -96,58 +94,25 @@ class DownloadTask extends AsyncTask<String, Integer, String> {
             Toast.makeText(context, path,
                     Toast.LENGTH_LONG).show();
             if (path.equals(context.getFilesDir().toString() + "/esignboard_data.zip")) {
-                unpackZip(context.getFilesDir().toString(), "esignboard_data.zip");
+                unzip();
             }
         }
     }
 
 
 
-    private boolean unpackZip(String path, String zipname)
-    {
-        InputStream is;
-        ZipInputStream zis;
-        try
-        {
-            String filename;
-            is = new FileInputStream(path + "/" + zipname);
-            zis = new ZipInputStream(new BufferedInputStream(is));
-            ZipEntry ze;
-            byte[] buffer = new byte[1024];
-            int count;
+    protected void unzip() {
+        String source = context.getFilesDir().toString() + "/esignboard_data.zip";
+        String destination = context.getFilesDir().toString();
 
-            Toast.makeText(context, "Update completed!",
-                    Toast.LENGTH_LONG).show();
+        try {
+            ZipFile zipFile = new ZipFile(source);
 
-            while ((ze = zis.getNextEntry()) != null)
-            {
-                filename = ze.getName();
-
-                if (ze.isDirectory()) {
-                    File fmd = new File(path + "/" + filename);
-                    fmd.mkdirs();
-                    continue;
-                }
-
-                FileOutputStream fout = new FileOutputStream(path + "/" +filename);
-
-                while ((count = zis.read(buffer)) != -1)
-                {
-                    fout.write(buffer, 0, count);
-                }
-
-                fout.close();
-                zis.closeEntry();
-            }
-            zis.close();
-        } catch(IOException e) {
+            zipFile.extractAll(destination);
+        } catch (ZipException e) {
             e.printStackTrace();
-            return false;
         }
-
-        Toast.makeText(context, "Update completed!",
-                Toast.LENGTH_LONG).show();
-
-        return true;
     }
+
+
 }

@@ -267,7 +267,7 @@ public class MainActivity extends Activity {
                 eSignboardDevices.add( inFile.getName().toUpperCase() );
             }
         }
-        Toast.makeText(getApplicationContext(), eSignboardDevices.toString() ,Toast.LENGTH_LONG).show();
+        //Toast.makeText(getApplicationContext(), eSignboardDevices.toString() ,Toast.LENGTH_LONG).show();
     }
 
 
