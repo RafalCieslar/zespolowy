@@ -1,28 +1,10 @@
+import bbcode
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.files.images import get_image_dimensions
-from django import forms
 from django.http import Http404, JsonResponse, HttpResponse
-import zipfile
-from hashlib import md5
-
-from .forms import POIform#, MDeviceform
-
+from .forms import POIform
+from .methods import checkpath, handlefile, createzip
 from .models import Device, Poi
-from .checkpath import checkpath
-from .filehandler import handlefile
-from django.core.urlresolvers import reverse
-import bbcode
-import os
-from .models import Device, Poi
-
-
-def generate_md5(fname):  # tego zdecydowanie tutaj nie powinno być
-    hash_md5 = md5()
-    with open(fname, "rb") as f:
-        for chunk in iter(lambda: f.read(4096), b""):
-            hash_md5.update(chunk)
-    return hash_md5.hexdigest()
-
 
 # Create your views here.
 
@@ -39,23 +21,6 @@ def dashboard(request):
 
 def update(request, device_id):
     mdevice = get_object_or_404(Device, pk=device_id)
-    pois = Poi.objects.filter(parent_device__in=[mdevice.id])
-    files_dir = 'files/' + str(mdevice.id) + '/'
-    zip_filename = 'update.zip'  # without trailing slash
-    html_filename = '/index.html'  # with trailing slash
-    img_filename = '/file.jpg'  # with trailing slash
-
-    zip_file = zipfile.ZipFile(files_dir + zip_filename, mode='w')
-    for poi in pois:
-        if os.path.isfile(files_dir + poi.uuid + html_filename):
-            zip_file.write(files_dir + poi.uuid + html_filename, poi.uuid + html_filename)
-        if os.path.isfile(files_dir + poi.uuid + html_filename):
-            zip_file.write(files_dir + poi.uuid + img_filename, poi.uuid + img_filename)
-    zip_file.close()
-
-    mdevice.hash = generate_md5('files/' + str(mdevice.id) + '/update.zip')
-    mdevice.save()
-
     return JsonResponse({'data_checksum': mdevice.hash})
 
 
@@ -111,22 +76,16 @@ def poi_edit(request, device_id):
                 renderfile.write(rendered)
                 renderfile.write('</p></body></html>')
                 renderfile.close()
+
+                createzip(vPoi)
+
                 # message = "Sukces!"
                 return redirect('devices:dashboard')
         else:
             message = form.errors
     else:
         form = POIform(initial={'name': vPoi.name, 'uuid': vPoi.uuid, 'bb_text': vPoi.content})
-    return render(request, 'devices/edit.html', {'form': form, 'message': message})
-
-
-def mdevice_view(request, device_id):
-    if not request.user.is_authenticated():
-        return redirect('user:login')
-    device = get_object_or_404(Device, pk=device_id)
-    if not device.objects.filter(owners__in=request.user.id).exists():
-        return Http404
-    return render(request, 'devices/view.html')
+    return render(request, 'devices/poi.edit.html', {'form': form, 'message': message})
 
 
 def mdevice_edit(request, device_id):
