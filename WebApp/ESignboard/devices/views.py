@@ -72,9 +72,11 @@ def poi_edit(request, device_id):
                 rendered = bbcode.render_html(bbtext)
                 renderfile = open(path + "/index.html", "w")
                 renderfile.write(
-                    '<html><body><img src="file.jpg" style="width: 100%; display: block; max-height: 600px;" /><p>')
+                    '<html><head><meta charset="ISO-8859-2"></head>'
+                    '<body><img src="file.jpg" style="width: 100%; display: block; max-height: 600px;" /><p>')
                 renderfile.write(rendered)
-                renderfile.write('</p></body></html>')
+                renderfile.write(
+                    '</p></body></html>')
                 renderfile.close()
 
                 createzip(vPoi)
