@@ -1,11 +1,8 @@
-package com.esignboard;
+package e_signboard.mobileapp;
 
-import android.os.Bundle;
 import android.app.Activity;
+import android.os.Bundle;
 import android.webkit.WebView;
-import android.widget.Toast;
-
-import com.esignboard.R;
 
 public class HtmlDisplay extends Activity {
 

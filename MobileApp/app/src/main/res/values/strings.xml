@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">MobileApp</string>
-    <string name="title_activity_htmli_dsplay">HtmlDisplay</string>
+    <string name="app_name">E-Signboard</string>
+    <string name="title_activity_html_display">HtmlDisplay</string>
 </resources>
