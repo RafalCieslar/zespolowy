@@ -1,4 +1,4 @@
-package com.esignboard;
+package e_signboard.mobileapp;
 
 import android.content.Context;
 import android.os.AsyncTask;
@@ -15,8 +15,6 @@ import java.net.URL;
 
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.core.ZipFile;
-
-import com.esignboard.R;
 
 // Klasa zajmujaca sie pobieraniem i wypakowywaniem
 class DownloadTask extends AsyncTask<String, Integer, String> {
@@ -95,6 +93,7 @@ class DownloadTask extends AsyncTask<String, Integer, String> {
                     Toast.LENGTH_LONG).show();
             if (path.equals(context.getFilesDir().toString() + "/esignboard_data.zip")) {
                 unzip();
+                //unpackZip(context.getFilesDir().toString(), "esignboard_data.zip");
             }
         }
     }

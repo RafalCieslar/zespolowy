@@ -1,8 +1,12 @@
-package com.esignboard;
+package e_signboard.mobileapp;
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.DialogInterface;
+import android.content.pm.PackageManager;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
@@ -24,6 +28,8 @@ import java.util.List;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.StrictMode;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.ArrayAdapter;
@@ -31,11 +37,10 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.esignboard.R;
-
 public class MainActivity extends Activity {
 
     private static final int REQUEST_ENABLE_BT = 1;
+    private static final int REQUEST_ACCESS_COARSE_LOCATION_PERMISSION = 2;
 
     //moj pc: 001a7dda71
     //maciek WinPhone: 48507368ca3a
@@ -54,8 +59,14 @@ public class MainActivity extends Activity {
     private WifiManager myWifiManager;
     private WifiReceiver myWifiReceiver;
     private int netId;
+    private boolean dontAskAgain = false;
+    private String ip = "mdevice";
     private String wifiSSID = "\"ESignboard\"";
-    //private String wifiPASS = "\"haslo\"";
+    //private String ip = "192.168.0.59";
+    //private String wifiSSID = "\"Ruter Sruter Dd\"";
+    //private String wifiPASS = "\"trudnehaslo\"";
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,33 +80,28 @@ public class MainActivity extends Activity {
         StrictMode.setThreadPolicy(policy);
 
 
-        //get list of  devices defined in fcking asset folder
 
-//            for (File file : getFilesDir().listFiles()) {
-//
-//                    if(file.isDirectory()) {
-//                        eSignboardDevices.add(file.getName());
-//                    }
-//            }
-        //v2
+        // sprawdzenie czy apka ma uprawnienia do COARSE_LOCATION
+        // jak nie to robi request
+        int permissionCheck = ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.ACCESS_COARSE_LOCATION);
+        if (permissionCheck == PackageManager.PERMISSION_DENIED) {
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                    REQUEST_ACCESS_COARSE_LOCATION_PERMISSION);
+        }
+
 
 
 //        ten update listy folderow dałem do przycisku Search (do funkcji find)!
-        //updateFolderList();
+//        updateFolderList();
 
-           // eSignboardDevices.add("001A7DDA7107");
-        //CIESLAR TU SO WSZYSTKIE PLIKI
-        //String f = getFilesDir().toString()+"/";
-//
-//        File yourDir = new File(getFilesDir().);
-//        for (File f : yourDir.listFiles()) {
-//            if (f.isFile())
-//               eSignboardDevices.add(f.getName().replaceAll(".html",""));
-//            // make something with the name
-//        }
+
 
         // connecting to Wifi Manager
-        myWifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+        myWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        // adding WiFi configuration
+        addWifiConf();
         // starting discovering WiFi
         myWifiReceiver = new WifiReceiver();
         registerReceiver(myWifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
@@ -125,6 +131,7 @@ public class MainActivity extends Activity {
             }
 
 
+
             // create the arrayAdapter that contains the BTDevices
             BTArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
 
@@ -135,7 +142,6 @@ public class MainActivity extends Activity {
 
                 @Override
                 public void onClick(View v) {
-                    // TODO Auto-generated method stub
                     find(v);
                 }
             });
@@ -147,37 +153,71 @@ public class MainActivity extends Activity {
 
                 @Override
                 public void onClick(View v) {
-                    // TODO Auto-generated method stub
                     checkForUpdate();
                 }
             });
 
 
-            // adding WiFi configuration
-            addWifiConf();
+
         }
     }
 
+
+
     @Override
     protected void onPause() {
-        unregisterReceiver(myWifiReceiver);
+        try {
+            unregisterReceiver(myWifiReceiver);
+        } catch (RuntimeException re) {
+            re.toString();
+        }
+
         super.onPause();
     }
 
+
+
     @Override
     protected void onResume() {
-        registerReceiver(myWifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
+        if (!dontAskAgain)
+            registerReceiver(myWifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
         super.onResume();
     }
 
+
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // TODO Auto-generated method stub
-        if(requestCode == REQUEST_ENABLE_BT){
-            if(myBluetoothAdapter.isEnabled()) {
-                Toast.makeText(MainActivity.this, "BT Enabled", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(MainActivity.this, "BT Disabled", Toast.LENGTH_SHORT).show();
+        switch (requestCode) {
+            case REQUEST_ENABLE_BT: {
+                if(myBluetoothAdapter.isEnabled()) {
+                    Toast.makeText(MainActivity.this, "BT Enabled", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MainActivity.this, "BT Disabled", Toast.LENGTH_SHORT).show();
+                }
+            }
+        }
+    }
+
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_ACCESS_COARSE_LOCATION_PERMISSION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    Toast.makeText(getApplicationContext(), "Permissions granted!",
+                            Toast.LENGTH_LONG).show();
+
+                } else {
+
+                    Toast.makeText(getApplicationContext(), "Permissions denied!",
+                            Toast.LENGTH_LONG).show();
+
+                }
+                return;
             }
         }
     }
@@ -197,9 +237,9 @@ public class MainActivity extends Activity {
 
                 if(eSignboardDevices.contains(device.getAddress().replace(":",""))){
                     notyfikuj("ESignboard in range!", "");
-                    Intent intent2 = new Intent(getApplicationContext(),HtmlDisplay.class);
-                    intent2.putExtra("device-name",device.getAddress().replace(":",""));
-                    startActivity(intent2);
+                    Intent showHtmlIntent = new Intent(getApplicationContext(),HtmlDisplay.class);
+                    showHtmlIntent.putExtra("device-name",device.getAddress().replace(":",""));
+                    startActivity(showHtmlIntent);
                 }
             }
         }
@@ -208,25 +248,25 @@ public class MainActivity extends Activity {
 
 
     class WifiReceiver extends BroadcastReceiver {
+        @Override
         public void onReceive(Context c, Intent intent) {
             if (myWifiManager.isWifiEnabled() && !(myWifiManager.getConnectionInfo().getSSID().equals(wifiSSID))) {
                 List<ScanResult> wifiScanList = myWifiManager.getScanResults();
+
                 for (ScanResult result : wifiScanList) {
-                    if (result.SSID.equals(wifiSSID)) {
+                    if (result.SSID.equals(wifiSSID.substring(1, wifiSSID.length()-1))) {
                         // zamiast notyfikacji jest laczenie do sieci WiFi
                         //notyfikuj("mDevice in range!", "Connect to this network if you want to check for update.");
 
-                        // connecting to WiFi
-                        Toast.makeText(MainActivity.this, "Connecting to WiFi!", Toast.LENGTH_SHORT).show();
-                        myWifiManager.disconnect();
-                        myWifiManager.enableNetwork(netId, true);
-                        myWifiManager.reconnect();
+                        // asking for reconnect
+                        requestWifiReconnection();
+
                     }
                 }
             }
             // Tutaj mozna dodac automatyczny update
             //if (myWifiManager.isWifiEnabled() && (myWifiManager.getConnectionInfo().getSSID().equals(wifiSSID)))
-                //Toast.makeText(MainActivity.this, "Connected to WiFi!", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(MainActivity.this, "Connected to WiFi!", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -235,21 +275,62 @@ public class MainActivity extends Activity {
     private void addWifiConf() {
         WifiConfiguration conf = new WifiConfiguration();
         conf.SSID = wifiSSID;
+
         conf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+        conf.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+        conf.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+        conf.allowedAuthAlgorithms.clear();
+        conf.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+        conf.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+        conf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
+        conf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
+        conf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+        conf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
         //conf.preSharedKey = wifiPASS;
         List<WifiConfiguration> list = myWifiManager.getConfiguredNetworks();
+
         netId = -1;
         for( WifiConfiguration i : list ) {
             if (i.SSID != null && i.SSID.equals(wifiSSID)) {
-                //Toast.makeText(getApplicationContext(),"Updating WiFi conf!" ,Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(),"Updating WiFi config!" ,Toast.LENGTH_LONG).show();
                 netId = i.networkId;
-                conf.networkId = netId;
-                myWifiManager.updateNetwork(conf);
+                myWifiManager.removeNetwork(netId);
             }
         }
         if (netId == -1) {
-            //Toast.makeText(getApplicationContext(),"New WiFi conf!" ,Toast.LENGTH_LONG).show();
-            netId = myWifiManager.addNetwork(conf);
+            Toast.makeText(getApplicationContext(),"New WiFi config!" ,Toast.LENGTH_LONG).show();
+        }
+        netId = myWifiManager.addNetwork(conf);
+
+    }
+
+
+
+    public void requestWifiReconnection() {
+        if (!dontAskAgain) {
+            dontAskAgain = true;
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setMessage("Czy chcesz połączyć się z mDevice za pomocą WiFi?");
+            builder.setPositiveButton("Tak", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    // Yes button clicked
+                    // connecting to WiFi
+                    dialog.dismiss();
+                    myWifiManager.disconnect();
+                    myWifiManager.enableNetwork(netId, false);
+                    myWifiManager.reconnect();
+                }
+            });
+            builder.setNegativeButton("Nie", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    // No button clicked
+                    unregisterReceiver(myWifiReceiver);
+                    dontAskAgain = true;
+                }
+            });
+            AlertDialog dialog = builder.create();
+            dialog.show();
         }
     }
 
@@ -267,13 +348,12 @@ public class MainActivity extends Activity {
                 eSignboardDevices.add( inFile.getName().toUpperCase() );
             }
         }
-        //Toast.makeText(getApplicationContext(), eSignboardDevices.toString() ,Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(), eSignboardDevices.toString() ,Toast.LENGTH_LONG).show();
     }
 
 
 
     public void checkForUpdate() {
-        String ip = "mdevice";
 
         if (myWifiManager.isWifiEnabled() && myWifiManager.getConnectionInfo().getSSID().equals(wifiSSID)) {
             boolean update = false;
@@ -364,8 +444,6 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        // TODO Auto-generated method stub
-        super.onDestroy();
         // gdy nie jest zerejestrowany jeszcze to sie sypal...
         // a tak w sumie to gdyby go zarejestrowac w on create to by wyszukiwal chyba od poczatku
         try {
@@ -374,9 +452,16 @@ public class MainActivity extends Activity {
             re.toString();
         }
         myBluetoothAdapter.disable();
+        try {
+        unregisterReceiver(myWifiReceiver);
+        } catch (RuntimeException re) {
+            re.toString();
+        }
 
         Toast.makeText(getApplicationContext(),"Bluetooth turned off",
                 Toast.LENGTH_LONG).show();
+
+        super.onDestroy();
     }
 
 }
