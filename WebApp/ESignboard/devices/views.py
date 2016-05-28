@@ -43,6 +43,13 @@ def poi_view(request, device_id):
     return render(request, 'devices/view.html')
 
 
+def poi_new(request):
+    if not request.user.is_authenticated():
+        return redirect('user:login')
+
+    return render(request, 'devices/poi.new.html')
+
+
 def poi_edit(request, device_id):
     message = ""
     if not request.user.is_authenticated():

@@ -35,7 +35,10 @@
     </div>
 
     <div class="container">
-        <h3>POI</h3>
+        <div style="position: relative;">
+            <h3>POI</h3>
+            <a href="{% url 'devices:poi_new' %}" class="btn btn-success" style="position: absolute; right: 0; top: 0;">+ Dodaj POI</a>
+        </div>
             {% if not pois %}
             <div class="alert alert-info">
                 Nie posiadasz żadnych przypisanych do siebie POI.
