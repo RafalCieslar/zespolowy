@@ -62,22 +62,14 @@ def createzip(poiobject):
     zip_filename = 'update.zip'  # without trailing slash
     html_filename = '/index.html'  # with trailing slash
     img_filename = '/file.jpg'  # with trailing slash
-    #temp_file = io.StringIO('readthis')
-    # zip_file_holder = io.BytesIO()
-
-    # zip_file = zipfile.ZipFile(zip_file_holder, mode='w', compression=zipfile.ZIP_DEFLATED)
     zip_file = zipfile.ZipFile(files_dir + zip_filename, mode='w', compression=zipfile.ZIP_DEFLATED)
-    # zip_file.writestr('read', temp_file.getvalue())
+
     for poi in pois:
         if os.path.isfile(files_dir + poi.uuid + html_filename):
             zip_file.write(files_dir + poi.uuid + html_filename, poi.uuid + html_filename)
         if os.path.isfile(files_dir + poi.uuid + html_filename):
             zip_file.write(files_dir + poi.uuid + img_filename, poi.uuid + img_filename)
     zip_file.close()
-
-    # with open(files_dir + zip_filename, mode='wb') as fd:
-    #     zip_file_holder.seek(0)
-    #     copyfileobj(zip_file_holder, fd)
 
     mdevice.hash = generate_md5('files/' + str(mdevice.id) + '/update.zip')
     mdevice.save()

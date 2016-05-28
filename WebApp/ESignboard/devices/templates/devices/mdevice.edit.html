@@ -1,0 +1,28 @@
+{% extends 'main/base.html' %}
+
+{% block title %}
+    ESignboard &ndash; edycja MDevice
+{% endblock %}
+
+{% block content %}
+<h1>Edycja MDevice</h1>
+{% if message %}
+    {% ifequal message "Sukces!" %}
+    <div class="alert alert-success">{{ message }}</div>
+    {% else %}
+    <div class="alert alert-danger">
+        {{ message }}
+    </div>
+    {% endifequal %}
+{% endif %}
+<form role="form" method="POST" enctype="multipart/form-data" action="">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="id_bb_text">Nazwa:</label>
+        {{ form.name }}
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-success">Zmień</button>
+    </div>
+</form>
+{% endblock %}

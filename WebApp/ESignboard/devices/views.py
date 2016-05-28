@@ -2,7 +2,7 @@ import bbcode
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.files.images import get_image_dimensions
 from django.http import Http404, JsonResponse, HttpResponse
-from .forms import POIform
+from .forms import POIform, MDeviceform
 from .methods import checkpath, handlefile, createzip
 from .models import Device, Poi
 
@@ -69,6 +69,7 @@ def poi_edit(request, device_id):
                 bbtext = form.cleaned_data['bb_text']
                 vPoi.content = bbtext
                 vPoi.save()
+
                 rendered = bbcode.render_html(bbtext)
                 renderfile = open(path + "/index.html", "w")
                 renderfile.write(
@@ -81,7 +82,6 @@ def poi_edit(request, device_id):
 
                 createzip(vPoi)
 
-                # message = "Sukces!"
                 return redirect('devices:dashboard')
         else:
             message = form.errors
@@ -94,9 +94,21 @@ def mdevice_edit(request, device_id):
     if not request.user.is_authenticated():
         return redirect('user:login')
     device = get_object_or_404(Device, pk=device_id)
-    if not device.objects.filter(owners__in=request.user.id).exists():
+
+    if not device.owners.filter(id=request.user.id).exists():
         return Http404
-    #
-    # form = MDeviceform(device)
-    # message = ""
-    return render(request, 'devices/edit.html')
+    message = ''
+
+    if request.method == 'POST':
+        form = MDeviceform(request.POST)
+        if form.is_valid():
+            device.name = form.cleaned_data['name']
+            device.save()
+
+            return redirect('devices:dashboard')
+        else:
+            message = form.errors
+    else:
+        form = MDeviceform(initial={'name': device.name})
+
+    return render(request, 'devices/mdevice.edit.html', {'form': form, 'message': message})

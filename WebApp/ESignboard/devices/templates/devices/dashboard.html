@@ -21,13 +21,13 @@
             </div>
             {% else %}
                 <div class="row head">
-                    <div class="col-md-12">Nazwa</div>
-                    <!--<div class="col-md-3">Edycja</div>-->
+                    <div class="col-md-9">Nazwa</div>
+                    <div class="col-md-3">Edycja</div>
                 </div>
                 {% for mdevice in mdevices %}
                     <div class="row">
-                        <div class="col-md-12">{{mdevice.name}}</div>
-                        <!--<div class="col-md-3"><a href="{% url 'devices:mdevice_edit' mdevice.id %}">Zmień</a></div>-->
+                        <div class="col-md-9">{{mdevice.name}}</div>
+                        <div class="col-md-3"><a href="{% url 'devices:mdevice_edit' mdevice.id %}">Zmień</a></div>
                     </div>
                 {% endfor %}
             {% endif %}

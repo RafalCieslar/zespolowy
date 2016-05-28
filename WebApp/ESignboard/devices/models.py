@@ -13,10 +13,6 @@ class Device(models.Model):
     def __str__(self):
         return self.name
 
-    def compile_cache(self):
-        #to do: cache compilation
-        return 1
-
 
 class Poi(models.Model):
     name = models.CharField(max_length=30)
