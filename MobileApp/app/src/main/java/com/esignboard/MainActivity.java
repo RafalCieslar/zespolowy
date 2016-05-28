@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.net.wifi.ScanResult;
+import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.app.Activity;
@@ -41,19 +42,20 @@ public class MainActivity extends Activity {
     //maciek PC: 419039111468
 
     private Button findBtn;
-    private BluetoothAdapter myBluetoothAdapter;
     private Button updateBtn;
-    ImageView image;
+    private ImageView image;
 
 
+    private BluetoothAdapter myBluetoothAdapter;
     private ArrayAdapter<String> BTArrayAdapter;
     private HashSet<String> eSignboardDevices  = new HashSet<String>();
 
 
     private WifiManager myWifiManager;
     private WifiReceiver myWifiReceiver;
-
-
+    private int netId;
+    private String wifiSSID = "\"ESignboard\"";
+    //private String wifiPASS = "\"haslo\"";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,8 +63,6 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         image = (ImageView) findViewById(R.id.imageView);
         image.setImageResource(R.drawable.ulotka);
-
-
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
                 .permitAll().build();
@@ -94,11 +94,14 @@ public class MainActivity extends Activity {
 //            // make something with the name
 //        }
 
-        // connect to Wifi Manager and start discovering
+        // connecting to Wifi Manager
         myWifiManager = (WifiManager)getSystemService(Context.WIFI_SERVICE);
+        // starting discovering WiFi
         myWifiReceiver = new WifiReceiver();
         registerReceiver(myWifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
         myWifiManager.startScan();
+
+
 
         // take an instance of BluetoothAdapter - Bluetooth radio
         myBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -122,6 +125,10 @@ public class MainActivity extends Activity {
             }
 
 
+            // create the arrayAdapter that contains the BTDevices
+            BTArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
+
+
 
             findBtn = (Button)findViewById(R.id.search);
             findBtn.setOnClickListener(new OnClickListener() {
@@ -135,9 +142,6 @@ public class MainActivity extends Activity {
 
 
 
-            // create the arrayAdapter that contains the BTDevices, and set it to the ListView
-            BTArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-
             updateBtn = (Button)findViewById(R.id.update);
             updateBtn.setOnClickListener(new OnClickListener() {
 
@@ -147,6 +151,10 @@ public class MainActivity extends Activity {
                     checkForUpdate();
                 }
             });
+
+
+            // adding WiFi configuration
+            addWifiConf();
         }
     }
 
@@ -201,16 +209,47 @@ public class MainActivity extends Activity {
 
     class WifiReceiver extends BroadcastReceiver {
         public void onReceive(Context c, Intent intent) {
-            if (myWifiManager.isWifiEnabled() && !(myWifiManager.getConnectionInfo().getSSID().equals("\"ESignboard\""))) {
+            if (myWifiManager.isWifiEnabled() && !(myWifiManager.getConnectionInfo().getSSID().equals(wifiSSID))) {
                 List<ScanResult> wifiScanList = myWifiManager.getScanResults();
                 for (ScanResult result : wifiScanList) {
-                    if (result.SSID.equals("ESignboard")) {
-                        notyfikuj("mDevice in range!", "Connect to this network if you want to check for update.");
+                    if (result.SSID.equals(wifiSSID)) {
+                        // zamiast notyfikacji jest laczenie do sieci WiFi
+                        //notyfikuj("mDevice in range!", "Connect to this network if you want to check for update.");
+
+                        // connecting to WiFi
+                        Toast.makeText(MainActivity.this, "Connecting to WiFi!", Toast.LENGTH_SHORT).show();
+                        myWifiManager.disconnect();
+                        myWifiManager.enableNetwork(netId, true);
+                        myWifiManager.reconnect();
                     }
                 }
             }
             // Tutaj mozna dodac automatyczny update
-            // if (myWifiManager.isWifiEnabled() && (myWifiManager.getConnectionInfo().getSSID().equals("\"ESignboard\"")))
+            //if (myWifiManager.isWifiEnabled() && (myWifiManager.getConnectionInfo().getSSID().equals(wifiSSID)))
+                //Toast.makeText(MainActivity.this, "Connected to WiFi!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+
+    private void addWifiConf() {
+        WifiConfiguration conf = new WifiConfiguration();
+        conf.SSID = wifiSSID;
+        conf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+        //conf.preSharedKey = wifiPASS;
+        List<WifiConfiguration> list = myWifiManager.getConfiguredNetworks();
+        netId = -1;
+        for( WifiConfiguration i : list ) {
+            if (i.SSID != null && i.SSID.equals(wifiSSID)) {
+                //Toast.makeText(getApplicationContext(),"Updating WiFi conf!" ,Toast.LENGTH_LONG).show();
+                netId = i.networkId;
+                conf.networkId = netId;
+                myWifiManager.updateNetwork(conf);
+            }
+        }
+        if (netId == -1) {
+            //Toast.makeText(getApplicationContext(),"New WiFi conf!" ,Toast.LENGTH_LONG).show();
+            netId = myWifiManager.addNetwork(conf);
         }
     }
 
@@ -228,22 +267,22 @@ public class MainActivity extends Activity {
                 eSignboardDevices.add( inFile.getName().toUpperCase() );
             }
         }
-        Toast.makeText(getApplicationContext(), eSignboardDevices.toString() ,
-                Toast.LENGTH_LONG).show();
+        //Toast.makeText(getApplicationContext(), eSignboardDevices.toString() ,Toast.LENGTH_LONG).show();
     }
 
 
 
     public void checkForUpdate() {
-        if (myWifiManager.isWifiEnabled() && myWifiManager.getConnectionInfo().getSSID().equals("\"ESignboard\"")) {
+        String ip = "mdevice";
+
+        if (myWifiManager.isWifiEnabled() && myWifiManager.getConnectionInfo().getSSID().equals(wifiSSID)) {
             boolean update = false;
             try {
                 File local_checksum = new File(getFilesDir().toString() + "/esignboard_data_checksum.bin");
 
 
 
-                //-----------zamiana http://192.168.0.1 na http://mdevice
-                URL url1 = new URL("http://mdevice/esignboard_data_checksum");
+                URL url1 = new URL("http://" + ip + "/esignboard_data_checksum");
                 URL url2 = new URL("file:///" + this.getFilesDir().toString() + "/esignboard_data_checksum.bin");
 
                 if (local_checksum.exists()) {
@@ -252,7 +291,7 @@ public class MainActivity extends Activity {
                     String str1, str2;
                     while ((str1 = mdevice.readLine()) != null && (str2 = local.readLine()) != null) {
                         if (!str1.equals(str2)) {
-                            Toast.makeText(getApplicationContext(),"New version available",
+                            Toast.makeText(getApplicationContext(),"New version available! Updating!",
                                     Toast.LENGTH_LONG).show();
                             update = true;
                         }
@@ -269,18 +308,17 @@ public class MainActivity extends Activity {
                     final DownloadTask downloadSum = new DownloadTask(this);
                     final DownloadTask downloadZip = new DownloadTask(this);
 
-                    //-----------zamiana http://192.168.0.1 na http://mdevice
-                    downloadSum.execute("http://mdevice/esignboard_data_checksum");
-                    downloadZip.execute("http://mdevice/esignboard_data.zip");
+                    downloadSum.execute("http://" + ip + "/esignboard_data_checksum");
+                    downloadZip.execute("http://" + ip + "/esignboard_data.zip");
                 } else {
-                    Toast.makeText(getApplicationContext(),"Data are up to date",
+                    Toast.makeText(getApplicationContext(),"Data are up to date!",
                             Toast.LENGTH_LONG).show();
                 }
             } catch (IOException e) {
                 e.printStackTrace();
             }
         } else {
-            Toast.makeText(getApplicationContext(),"You're not connected to mDevice",
+            Toast.makeText(getApplicationContext(),"You're not connected to mDevice!",
                     Toast.LENGTH_LONG).show();
         }
     }
@@ -294,7 +332,7 @@ public class MainActivity extends Activity {
         }
         else {
             updateFolderList();
-            Toast.makeText(getApplicationContext(),"Searching in progress",
+            Toast.makeText(getApplicationContext(),"Searching in progress...",
                     Toast.LENGTH_LONG).show();
             BTArrayAdapter.clear();
             myBluetoothAdapter.startDiscovery();
@@ -336,7 +374,6 @@ public class MainActivity extends Activity {
             re.toString();
         }
         myBluetoothAdapter.disable();
-        //   text.setText("Status: Disconnected");
 
         Toast.makeText(getApplicationContext(),"Bluetooth turned off",
                 Toast.LENGTH_LONG).show();
