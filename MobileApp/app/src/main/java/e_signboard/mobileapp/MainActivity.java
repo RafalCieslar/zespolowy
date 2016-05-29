@@ -122,11 +122,11 @@ public class MainActivity extends Activity {
                 Intent turnOnIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(turnOnIntent, REQUEST_ENABLE_BT);
 
-                Toast.makeText(getApplicationContext(),"Bluetooth turned on" ,
-                        Toast.LENGTH_LONG).show();
+                //Toast.makeText(getApplicationContext(),"Bluetooth turned on" ,
+                //        Toast.LENGTH_LONG).show();
             }
             else{
-                Toast.makeText(getApplicationContext(),"Bluetooth is already on",
+                Toast.makeText(getApplicationContext(),"Bluetooth is already enabled",
                         Toast.LENGTH_LONG).show();
             }
 
@@ -191,10 +191,11 @@ public class MainActivity extends Activity {
         switch (requestCode) {
             case REQUEST_ENABLE_BT: {
                 if(myBluetoothAdapter.isEnabled()) {
-                    Toast.makeText(MainActivity.this, "BT Enabled", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(MainActivity.this, "BT Disabled", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Bluetooth enabled", Toast.LENGTH_SHORT).show();
                 }
+                //else {
+                //    Toast.makeText(MainActivity.this, "Bluetooth disabled", Toast.LENGTH_SHORT).show();
+                //}
             }
         }
     }
@@ -258,7 +259,7 @@ public class MainActivity extends Activity {
                         // zamiast notyfikacji jest laczenie do sieci WiFi
                         //notyfikuj("mDevice in range!", "Connect to this network if you want to check for update.");
 
-                        // asking for reconnect
+                        // asking for reconnection
                         requestWifiReconnection();
 
                     }
@@ -292,14 +293,14 @@ public class MainActivity extends Activity {
         netId = -1;
         for( WifiConfiguration i : list ) {
             if (i.SSID != null && i.SSID.equals(wifiSSID)) {
-                Toast.makeText(getApplicationContext(),"Updating WiFi config!" ,Toast.LENGTH_LONG).show();
+                //Toast.makeText(getApplicationContext(),"Updating WiFi config!" ,Toast.LENGTH_LONG).show();
                 netId = i.networkId;
                 myWifiManager.removeNetwork(netId);
             }
         }
-        if (netId == -1) {
-            Toast.makeText(getApplicationContext(),"New WiFi config!" ,Toast.LENGTH_LONG).show();
-        }
+        //if (netId == -1) {
+        //    Toast.makeText(getApplicationContext(),"New WiFi config!" ,Toast.LENGTH_LONG).show();
+        //}
         netId = myWifiManager.addNetwork(conf);
 
     }
@@ -348,7 +349,7 @@ public class MainActivity extends Activity {
                 eSignboardDevices.add( inFile.getName().toUpperCase() );
             }
         }
-        Toast.makeText(getApplicationContext(), eSignboardDevices.toString() ,Toast.LENGTH_LONG).show();
+        //Toast.makeText(getApplicationContext(), eSignboardDevices.toString() ,Toast.LENGTH_LONG).show();
     }
 
 
@@ -379,7 +380,7 @@ public class MainActivity extends Activity {
                     mdevice.close();
                     local.close();
                 } else {
-                    Toast.makeText(getApplicationContext(),"No local file!",
+                    Toast.makeText(getApplicationContext(),"No local file! Updating!",
                             Toast.LENGTH_LONG).show();
                     update = true;
                 }
@@ -391,7 +392,7 @@ public class MainActivity extends Activity {
                     downloadSum.execute("http://" + ip + "/esignboard_data_checksum");
                     downloadZip.execute("http://" + ip + "/esignboard_data.zip");
                 } else {
-                    Toast.makeText(getApplicationContext(),"Data are up to date!",
+                    Toast.makeText(getApplicationContext(), "Data are up to date!",
                             Toast.LENGTH_LONG).show();
                 }
             } catch (IOException e) {
@@ -458,7 +459,7 @@ public class MainActivity extends Activity {
             re.toString();
         }
 
-        Toast.makeText(getApplicationContext(),"Bluetooth turned off",
+        Toast.makeText(getApplicationContext(),"Bluetooth disabled",
                 Toast.LENGTH_LONG).show();
 
         super.onDestroy();
