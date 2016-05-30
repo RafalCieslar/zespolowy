@@ -43,11 +43,57 @@ def poi_view(request, device_id):
     return render(request, 'devices/view.html')
 
 
-def poi_new(request):
+def poi_new(request, device_id):
+
+    message = ""
     if not request.user.is_authenticated():
         return redirect('user:login')
+    device = get_object_or_404(Device, pk=device_id)
 
-    return render(request, 'devices/poi.new.html')
+    if not device.owners.filter(id=request.user.id).exists():
+        return Http404
+    if request.method == 'POST':
+        vPoi = Poi();
+        form = POIform(request.POST, request.FILES)
+        if form.is_valid():
+            vPoi.uuid = form.cleaned_data['uuid']
+            vPoi.name = form.cleaned_data['name']
+            vPoi.parent_device = device
+            vPoi.save();
+            vPoi.owners.add(request.user)
+            vPoi.save()
+
+            picture = form.cleaned_data['image']
+            w, h = get_image_dimensions(picture)
+            if h > 600:
+                message = "Wysokość załączonego pliku to " + str(
+                    h) + " pikseli. Jego wysokość nie może być większa niż 600 pikseli"
+            else:
+                path = "files/" + str(vPoi.parent_device.id) + "/" + vPoi.uuid
+                checkpath(path)
+                handlefile(picture, path)
+                bbtext = form.cleaned_data['bb_text']
+                vPoi.content = bbtext
+                vPoi.save()
+
+                rendered = bbcode.render_html(bbtext)
+                renderfile = open(path + "/index.html", "w")
+                renderfile.write(
+                    '<html><head><meta charset="ISO-8859-2"></head>'
+                    '<body><img src="file.jpg" style="width: 100%; display: block; max-height: 600px;" /><p>')
+                renderfile.write(rendered)
+                renderfile.write(
+                    '</p></body></html>')
+                renderfile.close()
+
+                createzip(vPoi)
+
+                return redirect('devices:dashboard')
+        else:
+            message = form.errors
+    else:
+        form = POIform()
+    return render(request, 'devices/poi.new.html', {'form': form, 'message': message})
 
 
 def poi_edit(request, device_id):

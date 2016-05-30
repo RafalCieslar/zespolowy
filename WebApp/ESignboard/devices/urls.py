@@ -8,7 +8,7 @@ urlpatterns = [
     url(r'^update/(?P<device_id>[0-9a-z]+)$', views.update, name='update'),
     url(r'^download/(?P<device_id>[0-9a-z]+)$', views.download, name='download'),
     url(r'^poi/view/(?P<device_id>[0-9a-z]+)$', views.poi_view, name='poi_view'),
-    url(r'^poi/new$', views.poi_new, name='poi_new'),
+    url(r'^poi/new/(?P<device_id>[0-9a-z]+)$', views.poi_new, name='poi_new'),
     url(r'^poi/edit/(?P<device_id>[0-9a-z]+)$', views.poi_edit, name='poi_edit'),
     url(r'^mdevice/edit/(?P<device_id>[0-9]+)$', views.mdevice_edit, name='mdevice_edit')
 ]

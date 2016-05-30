@@ -21,12 +21,14 @@
             </div>
             {% else %}
                 <div class="row head">
-                    <div class="col-md-9">Nazwa</div>
+                    <div class="col-md-6">Nazwa</div>
+					<div class="col-md-3">Dodaj POI</div>
                     <div class="col-md-3">Edycja</div>
                 </div>
                 {% for mdevice in mdevices %}
                     <div class="row">
-                        <div class="col-md-9">{{mdevice.name}}</div>
+                        <div class="col-md-6">{{mdevice.name}}</div>
+						<div class="col-md-3"><a href="{% url 'devices:poi_new' mdevice.id %}">Dodaj POI</a></div>
                         <div class="col-md-3"><a href="{% url 'devices:mdevice_edit' mdevice.id %}">Zmień</a></div>
                     </div>
                 {% endfor %}
@@ -37,7 +39,7 @@
     <div class="container">
         <div style="position: relative;">
             <h3>POI</h3>
-            <a href="{% url 'devices:poi_new' %}" class="btn btn-success" style="position: absolute; right: 0; top: 0;">+ Dodaj POI</a>
+            
         </div>
             {% if not pois %}
             <div class="alert alert-info">

@@ -1,0 +1,40 @@
+{% extends 'main/base.html' %}
+
+{% block title %}
+    ESignboard &ndash; Nowy POI
+{% endblock %}
+
+{% block content %}
+<h1>Nowy POI</h1>
+{% if message %}
+    {% ifequal message "Sukces!" %}
+    <div class="alert alert-success">{{ message }}</div>
+    {% else %}
+    <div class="alert alert-danger">
+        {{ message }}
+    </div>
+    {% endifequal %}
+{% endif %}
+<form role="form" method="POST" enctype="multipart/form-data" action="">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="id_bb_text">Nazwa:</label>
+        {{ form.name }}
+    </div>
+    <div class="form-group">
+        <label for="id_bb_text">Opis (można wykorzystywać BBCode):</label>
+        {{ form.bb_text }}
+    </div>
+    <div class="form-group">
+        <label for="id_uuid">Unikalny identyfikator:</label>
+	    {{ form.uuid }}
+    </div>
+	<div class="form-group">
+        <label for="id_image">Zdjęcie:</label>
+	    {{ form.image }}
+    </div>
+    <div class="form-group">
+        <button type="submit" class="btn btn-success">Utwórz</button>
+    </div>
+</form>
+{% endblock %}
