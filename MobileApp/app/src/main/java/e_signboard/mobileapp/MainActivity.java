@@ -19,9 +19,13 @@ import android.content.Context;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
 
@@ -44,7 +48,6 @@ public class MainActivity extends Activity {
 
     //moj pc: 001a7dda71
     //maciek WinPhone: 48507368ca3a
-    //maciek PC: 419039111468
 
     private Button findBtn;
     private Button updateBtn;
@@ -62,6 +65,7 @@ public class MainActivity extends Activity {
     private boolean dontAskAgain = false;
     private String ip = "mdevice";
     private String wifiSSID = "\"ESignboard\"";
+    private String userID = "";
     //private String ip = "192.168.0.59";
     //private String wifiSSID = "\"Ruter Sruter Dd\"";
     //private String wifiPASS = "\"trudnehaslo\"";
@@ -117,18 +121,7 @@ public class MainActivity extends Activity {
                     Toast.LENGTH_LONG).show();
         } else {
 
-            //turn on BT
-            if (!myBluetoothAdapter.isEnabled()) {
-                Intent turnOnIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(turnOnIntent, REQUEST_ENABLE_BT);
-
-                //Toast.makeText(getApplicationContext(),"Bluetooth turned on" ,
-                //        Toast.LENGTH_LONG).show();
-            }
-            else{
-                Toast.makeText(getApplicationContext(),"Bluetooth is already enabled",
-                        Toast.LENGTH_LONG).show();
-            }
+            checkAndRequestForBT();
 
 
 
@@ -191,11 +184,8 @@ public class MainActivity extends Activity {
         switch (requestCode) {
             case REQUEST_ENABLE_BT: {
                 if(myBluetoothAdapter.isEnabled()) {
-                    Toast.makeText(MainActivity.this, "Bluetooth enabled", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Bluetooth enabled "+userID, Toast.LENGTH_SHORT).show();
                 }
-                //else {
-                //    Toast.makeText(MainActivity.this, "Bluetooth disabled", Toast.LENGTH_SHORT).show();
-                //}
             }
         }
     }
@@ -231,15 +221,17 @@ public class MainActivity extends Activity {
             // When discovery finds a device
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 // Get the BluetoothDevice object from the Intent
-                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                BluetoothDevice poi = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                String poiAddress = poi.getAddress().replace(":","");
                 // add the name and the MAC address of the object to the arrayAdapter
-                BTArrayAdapter.add(device.getAddress().replace(":",""));
+                BTArrayAdapter.add(poiAddress);
                 BTArrayAdapter.notifyDataSetChanged();
 
-                if(eSignboardDevices.contains(device.getAddress().replace(":",""))){
+                if(eSignboardDevices.contains(poiAddress)){
                     notyfikuj("ESignboard in range!", "");
-                    Intent showHtmlIntent = new Intent(getApplicationContext(),HtmlDisplay.class);
-                    showHtmlIntent.putExtra("device-name",device.getAddress().replace(":",""));
+                    addToVisits(poiAddress);
+                    Intent showHtmlIntent = new Intent(getApplicationContext(), HtmlDisplay.class);
+                    showHtmlIntent.putExtra("device-name", poiAddress);
                     startActivity(showHtmlIntent);
                 }
             }
@@ -307,7 +299,7 @@ public class MainActivity extends Activity {
 
 
 
-    public void requestWifiReconnection() {
+    private void requestWifiReconnection() {
         if (!dontAskAgain) {
             dontAskAgain = true;
 
@@ -337,7 +329,24 @@ public class MainActivity extends Activity {
 
 
 
-    public void updateFolderList() {
+    private void checkAndRequestForBT() {
+        //turn on BT
+        if (!myBluetoothAdapter.isEnabled()) {
+            Intent turnOnIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(turnOnIntent, REQUEST_ENABLE_BT);
+
+            //Toast.makeText(getApplicationContext(),"Bluetooth turned on" ,
+            //        Toast.LENGTH_LONG).show();
+        }
+        //else{
+        //Toast.makeText(getApplicationContext(),"Bluetooth is already enabled",
+        //        Toast.LENGTH_LONG).show();
+        //}
+    }
+
+
+
+    private void updateFolderList() {
         String path = getFilesDir().toString();
 
         eSignboardDevices.clear();
@@ -354,14 +363,125 @@ public class MainActivity extends Activity {
 
 
 
-    public void checkForUpdate() {
+    private void addToVisits(String poi) {
+
+        File visitsFile = new File(getFilesDir().toString(), "visist.txt");
+        Calendar c = Calendar.getInstance();
+        String thisVisit = userID + " " + c.get(Calendar.YEAR) + "-" + c.get(Calendar.MONTH)+1 + "-" +
+                c.get(Calendar.DAY_OF_MONTH) + " " + poi;
+        StringBuffer allVisits = new StringBuffer();
+
+        if (visitsFile.exists()) {
+
+            try {
+                FileInputStream visitsInputStream = new FileInputStream(visitsFile);
+                BufferedReader visitsReader = new BufferedReader(new InputStreamReader(visitsInputStream));
+                String visitLine;
+                String visit;
+                int visitCount;
+                boolean newVisit = true;
+
+                try {
+                    if (visitsInputStream != null) {
+                        while ((visitLine = visitsReader.readLine()) != null) {
+                            visit = visitLine.substring(0, thisVisit.length());
+                            visitCount = Integer.parseInt(visitLine.substring(thisVisit.length() + 1));
+                            if (visit.equals(thisVisit)) {
+                                visitCount++;
+                                newVisit = false;
+                            }
+                            allVisits.append(visit + " " + visitCount + "\n");
+                        }
+                        if (newVisit) {
+                            allVisits.append(thisVisit + " 1\n");
+                        }
+                        visitsInputStream.close();
+                    }
+
+                } catch (IOException e) {
+                    Toast.makeText(MainActivity.this, "Can't read visits!", Toast.LENGTH_SHORT).show();
+                    e.printStackTrace();
+                    return;
+                }
+            } catch (FileNotFoundException e) {
+                Toast.makeText(MainActivity.this, "Can't read visits!", Toast.LENGTH_SHORT).show();
+                e.printStackTrace();
+            }
+
+        }
+        else {
+            allVisits.append(thisVisit + " 1\n");
+        }
+
+        try {
+            FileOutputStream visitsOutputStream = new FileOutputStream(visitsFile);
+
+            try {
+                visitsOutputStream.write(allVisits.toString().getBytes());
+                visitsOutputStream.close();
+
+            } catch (IOException e) {
+                Toast.makeText(MainActivity.this, "Can't save visit!", Toast.LENGTH_SHORT).show();
+                e.printStackTrace();
+            }
+
+        } catch (FileNotFoundException e) {
+            Toast.makeText(MainActivity.this, "Can't save visit!", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
+    }
+
+
+
+    private void uploadVisits() {
+
+        File visitsFile = new File(getFilesDir().toString(), "visist.txt");
+
+        if (visitsFile.exists()) {
+
+            try {
+
+                FileInputStream visitsFileStream = new FileInputStream(visitsFile);
+                BufferedReader visitsReader = new BufferedReader(new InputStreamReader(visitsFileStream));
+                String visit;
+                StringBuffer allVisits = new StringBuffer();
+                try {
+                    if (visitsFileStream != null) {
+                        while ((visit = visitsReader.readLine()) != null) {
+                            allVisits.append(visit);
+                        }
+
+                        //poki co toast zamiast POSTa
+                        Toast.makeText(MainActivity.this, allVisits, Toast.LENGTH_SHORT).show();
+                        //TODO
+
+                        visitsFileStream.close();
+                        visitsFile.delete();
+                    }
+
+                } catch (IOException e) {
+                    Toast.makeText(MainActivity.this, "Can't read visits!", Toast.LENGTH_SHORT).show();
+                    e.printStackTrace();
+                }
+            } catch (FileNotFoundException e) {
+                Toast.makeText(MainActivity.this, "Can't upload visits!", Toast.LENGTH_SHORT).show();
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+
+
+    private void checkForUpdate() {
 
         if (myWifiManager.isWifiEnabled() && myWifiManager.getConnectionInfo().getSSID().equals(wifiSSID)) {
+
+            uploadVisits();
+
             boolean update = false;
             try {
                 File local_checksum = new File(getFilesDir().toString() + "/esignboard_data_checksum.bin");
-
-
 
                 URL url1 = new URL("http://" + ip + "/esignboard_data_checksum");
                 URL url2 = new URL("file:///" + this.getFilesDir().toString() + "/esignboard_data_checksum.bin");
@@ -406,25 +526,36 @@ public class MainActivity extends Activity {
 
 
 
-    public void find(View view) {
-        if (myBluetoothAdapter.isDiscovering()) {
-            // the button is pressed when it discovers, so cancel the discovery
-            myBluetoothAdapter.cancelDiscovery();
-        }
-        else {
-            updateFolderList();
-            Toast.makeText(getApplicationContext(),"Searching in progress...",
-                    Toast.LENGTH_LONG).show();
-            BTArrayAdapter.clear();
-            myBluetoothAdapter.startDiscovery();
+    private void find(View view) {
+        checkAndRequestForBT();
 
-            registerReceiver(bReceiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
+        if (myBluetoothAdapter.isEnabled()) {
+
+            if (userID.equals("")) {
+                userID = myBluetoothAdapter.getAddress().replace(":", "");
+                if (userID.equals("020000000000")) {
+                    userID = android.provider.Settings.Secure.getString(this.getContentResolver(), "bluetooth_address").replace(":", "");
+                }
+            }
+
+            if (myBluetoothAdapter.isDiscovering()) {
+                // the button is pressed when it discovers, so cancel the discovery
+                myBluetoothAdapter.cancelDiscovery();
+            } else {
+                updateFolderList();
+                Toast.makeText(getApplicationContext(), "Searching in progress...\nYour ID: "+userID,
+                        Toast.LENGTH_LONG).show();
+                BTArrayAdapter.clear();
+                myBluetoothAdapter.startDiscovery();
+
+                registerReceiver(bReceiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
+            }
         }
     }
 
 
 
-    public void notyfikuj(String title,String message)
+    private void notyfikuj(String title,String message)
     {
         Intent intent = new Intent();
         PendingIntent pIntent = PendingIntent.getActivity(this,0,intent,0);
