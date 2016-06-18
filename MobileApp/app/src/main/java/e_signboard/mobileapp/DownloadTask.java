@@ -23,8 +23,19 @@ class DownloadTask extends AsyncTask<String, Integer, String> {
     private PowerManager.WakeLock mWakeLock;
     private String path = null;
 
-    DownloadTask(MainActivity context) {
-        this.context = context;
+    DownloadTask(MainActivity c) {
+        this.context = c;
+    }
+
+    @Override
+    protected void onPreExecute() {
+        super.onPreExecute();
+        // take CPU lock to prevent CPU from going off if the user
+        // presses the power button during download
+        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                getClass().getName());
+        mWakeLock.acquire();
     }
 
     @Override
@@ -69,17 +80,6 @@ class DownloadTask extends AsyncTask<String, Integer, String> {
                 connection.disconnect();
         }
         return null;
-    }
-
-    @Override
-    protected void onPreExecute() {
-        super.onPreExecute();
-        // take CPU lock to prevent CPU from going off if the user
-        // presses the power button during download
-        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-        mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
-                getClass().getName());
-        mWakeLock.acquire();
     }
 
     @Override

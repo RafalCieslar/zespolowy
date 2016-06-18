@@ -20,10 +20,11 @@ import android.content.Context;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Calendar;
 import java.util.HashSet;
@@ -40,6 +41,8 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
+
+
 
 public class MainActivity extends Activity {
 
@@ -65,10 +68,12 @@ public class MainActivity extends Activity {
     private boolean dontAskAgain = false;
     private String ip = "mdevice";
     private String wifiSSID = "\"ESignboard\"";
+    private String wifiPASS = "";
     private String userID = "";
-    //private String ip = "192.168.0.59";
-    //private String wifiSSID = "\"Ruter Sruter Dd\"";
-    //private String wifiPASS = "\"trudnehaslo\"";
+
+    // DO TESTOW
+    //private boolean maciekTest = true;
+    // DAC NA FALSE JEZELI TO ZOSTAWILEM
 
 
 
@@ -82,6 +87,16 @@ public class MainActivity extends Activity {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
                 .permitAll().build();
         StrictMode.setThreadPolicy(policy);
+
+
+
+        // DO TESTOW
+        //if (maciekTest) {
+        //    ip = "192.168.0.69:8080";
+        //    wifiSSID = "\"Ruter Sruter Dd\"";
+        //    wifiPASS = "\"trudnehaslo\"";
+        //}
+        // USUN JESLI ZOSTAWILEM
 
 
 
@@ -269,17 +284,21 @@ public class MainActivity extends Activity {
         WifiConfiguration conf = new WifiConfiguration();
         conf.SSID = wifiSSID;
 
-        conf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-        conf.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
-        conf.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
-        conf.allowedAuthAlgorithms.clear();
-        conf.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-        conf.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-        conf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
-        conf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
-        conf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-        conf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-        //conf.preSharedKey = wifiPASS;
+        if (wifiPASS.equals("")) {
+            conf.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+            conf.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+            conf.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+            conf.allowedAuthAlgorithms.clear();
+            conf.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+            conf.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+            conf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
+            conf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
+            conf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+            conf.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+        }
+        else {
+            conf.preSharedKey = wifiPASS;
+        }
         List<WifiConfiguration> list = myWifiManager.getConfiguredNetworks();
 
         netId = -1;
@@ -365,7 +384,7 @@ public class MainActivity extends Activity {
 
     private void addToVisits(String poi) {
 
-        File visitsFile = new File(getFilesDir().toString(), "visist.txt");
+        File visitsFile = new File(getFilesDir().toString(), "visits.txt");
         Calendar c = Calendar.getInstance();
         String thisVisit = userID + " " + c.get(Calendar.YEAR) + "-" + c.get(Calendar.MONTH)+1 + "-" +
                 c.get(Calendar.DAY_OF_MONTH) + " " + poi;
@@ -374,6 +393,7 @@ public class MainActivity extends Activity {
         if (visitsFile.exists()) {
 
             try {
+
                 FileInputStream visitsInputStream = new FileInputStream(visitsFile);
                 BufferedReader visitsReader = new BufferedReader(new InputStreamReader(visitsInputStream));
                 String visitLine;
@@ -381,51 +401,39 @@ public class MainActivity extends Activity {
                 int visitCount;
                 boolean newVisit = true;
 
-                try {
-                    if (visitsInputStream != null) {
-                        while ((visitLine = visitsReader.readLine()) != null) {
-                            visit = visitLine.substring(0, thisVisit.length());
-                            visitCount = Integer.parseInt(visitLine.substring(thisVisit.length() + 1));
-                            if (visit.equals(thisVisit)) {
-                                visitCount++;
-                                newVisit = false;
-                            }
-                            allVisits.append(visit + " " + visitCount + "\n");
+                if (visitsInputStream != null) {
+                    while ((visitLine = visitsReader.readLine()) != null) {
+                        visit = visitLine.substring(0, thisVisit.length());
+                        visitCount = Integer.parseInt(visitLine.substring(thisVisit.length() + 1, visitLine.length() - 1));
+                        if (visit.equals(thisVisit)) {
+                            visitCount++;
+                            newVisit = false;
                         }
-                        if (newVisit) {
-                            allVisits.append(thisVisit + " 1\n");
-                        }
-                        visitsInputStream.close();
+                        allVisits.append(visit + " " + visitCount + " \n");
                     }
-
-                } catch (IOException e) {
-                    Toast.makeText(MainActivity.this, "Can't read visits!", Toast.LENGTH_SHORT).show();
-                    e.printStackTrace();
-                    return;
+                    if (newVisit) {
+                        allVisits.append(thisVisit + " 1 \n");
+                    }
+                    visitsInputStream.close();
                 }
-            } catch (FileNotFoundException e) {
-                Toast.makeText(MainActivity.this, "Can't read visits!", Toast.LENGTH_SHORT).show();
+
+            } catch (Exception e) {
+                Toast.makeText(MainActivity.this, "Can't read visits! Probably this is your first visit after update...", Toast.LENGTH_SHORT).show();
                 e.printStackTrace();
             }
 
         }
         else {
-            allVisits.append(thisVisit + " 1\n");
+            allVisits.append(thisVisit + " 1 \n");
         }
 
         try {
+
             FileOutputStream visitsOutputStream = new FileOutputStream(visitsFile);
+            visitsOutputStream.write(allVisits.toString().getBytes());
+            visitsOutputStream.close();
 
-            try {
-                visitsOutputStream.write(allVisits.toString().getBytes());
-                visitsOutputStream.close();
-
-            } catch (IOException e) {
-                Toast.makeText(MainActivity.this, "Can't save visit!", Toast.LENGTH_SHORT).show();
-                e.printStackTrace();
-            }
-
-        } catch (FileNotFoundException e) {
+        } catch (Exception e) {
             Toast.makeText(MainActivity.this, "Can't save visit!", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
         }
@@ -435,7 +443,7 @@ public class MainActivity extends Activity {
 
     private void uploadVisits() {
 
-        File visitsFile = new File(getFilesDir().toString(), "visist.txt");
+        File visitsFile = new File(getFilesDir().toString(), "visits.txt");
 
         if (visitsFile.exists()) {
 
@@ -445,30 +453,50 @@ public class MainActivity extends Activity {
                 BufferedReader visitsReader = new BufferedReader(new InputStreamReader(visitsFileStream));
                 String visit;
                 StringBuffer allVisits = new StringBuffer();
-                try {
-                    if (visitsFileStream != null) {
-                        while ((visit = visitsReader.readLine()) != null) {
-                            allVisits.append(visit);
-                        }
-
-                        //poki co toast zamiast POSTa
-                        Toast.makeText(MainActivity.this, allVisits, Toast.LENGTH_SHORT).show();
-                        //TODO
-
-                        visitsFileStream.close();
-                        visitsFile.delete();
+                if (visitsFileStream != null) {
+                    while ((visit = visitsReader.readLine()) != null) {
+                        allVisits.append(visit + "\n");
                     }
 
-                } catch (IOException e) {
-                    Toast.makeText(MainActivity.this, "Can't read visits!", Toast.LENGTH_SHORT).show();
-                    e.printStackTrace();
+                    visitsFileStream.close();
+                    visitsFile.delete();
+
+                    sendPost(allVisits.toString());
                 }
-            } catch (FileNotFoundException e) {
-                Toast.makeText(MainActivity.this, "Can't upload visits!", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Toast.makeText(MainActivity.this, "Can't read visits! Probably you didn't visited anything...", Toast.LENGTH_SHORT).show();
                 e.printStackTrace();
             }
 
         }
+    }
+
+
+
+    private void sendPost(String postData) {
+        try {
+            // TUTAJ TRZEBA USTAWIC ODPOWIEDNIA KONCOWKE PO IP (NIE WIEM NA JAKIEJ BEDA ZCZYTYWAC)
+            URL url = new URL("http://" + ip + "/statistics");
+
+            byte[] postDataBytes = postData.getBytes("UTF-8");
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setRequestMethod("POST");
+            urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            urlConnection.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
+            urlConnection.setDoOutput(true);
+            urlConnection.getOutputStream().write(postDataBytes);
+            urlConnection.getOutputStream().flush();
+
+            // to do czytania odpowiedzi (nie potrzebne)
+            //Reader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
+            //for (int c; (c = in.read()) >= 0;)
+            //    System.out.print((char)c);
+
+        } catch (Exception e) {
+            Toast.makeText(MainActivity.this, "Can't upload visits!", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
+
     }
 
 
@@ -537,6 +565,12 @@ public class MainActivity extends Activity {
                     userID = android.provider.Settings.Secure.getString(this.getContentResolver(), "bluetooth_address").replace(":", "");
                 }
             }
+
+            // TEST DO USUNIECIA
+            //addToVisits("012345678910");
+            //addToVisits("999999999999");
+            //addToVisits("333333333333");
+            // USUN JEZELI ZOSTAWILEM
 
             if (myBluetoothAdapter.isDiscovering()) {
                 // the button is pressed when it discovers, so cancel the discovery
