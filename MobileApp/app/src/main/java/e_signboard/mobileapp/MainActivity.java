@@ -26,6 +26,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
@@ -69,11 +70,7 @@ public class MainActivity extends Activity {
     private String ip = "mdevice";
     private String wifiSSID = "\"ESignboard\"";
     private String wifiPASS = "";
-    private String userID = "";
-
-    // DO TESTOW
-    //private boolean maciekTest = true;
-    // DAC NA FALSE JEZELI TO ZOSTAWILEM
+    private String userID = "000000000000";
 
 
 
@@ -90,12 +87,10 @@ public class MainActivity extends Activity {
 
 
 
-        // DO TESTOW
-        //if (maciekTest) {
-        //    ip = "192.168.0.69:8080";
-        //    wifiSSID = "\"Ruter Sruter Dd\"";
-        //    wifiPASS = "\"trudnehaslo\"";
-        //}
+        // TODO DO TESTOW
+        //ip = "192.168.0.69:8080";
+        //wifiSSID = "\"Ruter Sruter Dd\"";
+        //wifiPASS = "\"trudnehaslo\"";
         // USUN JESLI ZOSTAWILEM
 
 
@@ -199,7 +194,7 @@ public class MainActivity extends Activity {
         switch (requestCode) {
             case REQUEST_ENABLE_BT: {
                 if(myBluetoothAdapter.isEnabled()) {
-                    Toast.makeText(MainActivity.this, "Bluetooth enabled "+userID, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Bluetooth enabled", Toast.LENGTH_SHORT).show();
                 }
             }
         }
@@ -386,7 +381,7 @@ public class MainActivity extends Activity {
 
         File visitsFile = new File(getFilesDir().toString(), "visits.txt");
         Calendar c = Calendar.getInstance();
-        String thisVisit = userID + " " + c.get(Calendar.YEAR) + "-" + c.get(Calendar.MONTH)+1 + "-" +
+        String thisVisit = userID + " " + c.get(Calendar.YEAR) + "-" + (c.get(Calendar.MONTH)+1) + "-" +
                 c.get(Calendar.DAY_OF_MONTH) + " " + poi;
         StringBuffer allVisits = new StringBuffer();
 
@@ -455,13 +450,13 @@ public class MainActivity extends Activity {
                 StringBuffer allVisits = new StringBuffer();
                 if (visitsFileStream != null) {
                     while ((visit = visitsReader.readLine()) != null) {
-                        allVisits.append(visit + "\n");
+                        allVisits.append(visit);
                     }
+
+                    sendPost(allVisits.toString());
 
                     visitsFileStream.close();
                     visitsFile.delete();
-
-                    sendPost(allVisits.toString());
                 }
             } catch (Exception e) {
                 Toast.makeText(MainActivity.this, "Can't read visits! Probably you didn't visited anything...", Toast.LENGTH_SHORT).show();
@@ -473,24 +468,44 @@ public class MainActivity extends Activity {
 
 
 
-    private void sendPost(String postData) {
+    private void sendPost(String postAllData) {
         try {
-            // TUTAJ TRZEBA USTAWIC ODPOWIEDNIA KONCOWKE PO IP (NIE WIEM NA JAKIEJ BEDA ZCZYTYWAC)
-            URL url = new URL("http://" + ip + "/statistics");
+            URL url = new URL("http://" + ip);
 
-            byte[] postDataBytes = postData.getBytes("UTF-8");
+            // TODO DO TESTOW
+            //url = new URL("http://" + ip + "/statistics");
+            // USUN JEZELI ZOSTAWILEM
+
+            String[] postData = postAllData.split(" ");
+            StringBuilder postDataBuilder = new StringBuilder();
+            for (int i = 0; i < postData.length; i+=4) {
+                postDataBuilder.append(
+                        URLEncoder.encode("UserID["+i/4+"]", "UTF-8") + "=" +
+                        URLEncoder.encode(postData[i], "UTF-8") + "&" );
+                postDataBuilder.append(
+                        URLEncoder.encode("Date["+i/4+"]", "UTF-8") + "=" +
+                        URLEncoder.encode(postData[i+1], "UTF-8") + "&" );
+                postDataBuilder.append(
+                        URLEncoder.encode("POI["+i/4+"]", "UTF-8") + "=" +
+                        URLEncoder.encode(postData[i+2], "UTF-8") + "&" );
+                postDataBuilder.append(
+                        URLEncoder.encode("Count["+i/4+"]", "UTF-8") + "=" +
+                        URLEncoder.encode(postData[i+3], "UTF-8") + "&" );
+            }
+            byte[] postDataBytes = postDataBuilder.toString().getBytes("UTF-8");
+
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             urlConnection.setRequestMethod("POST");
-            urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            urlConnection.setFixedLengthStreamingMode(postDataBytes.length);
+            urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
             urlConnection.setRequestProperty("Content-Length", String.valueOf(postDataBytes.length));
             urlConnection.setDoOutput(true);
             urlConnection.getOutputStream().write(postDataBytes);
             urlConnection.getOutputStream().flush();
 
-            // to do czytania odpowiedzi (nie potrzebne)
-            //Reader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
-            //for (int c; (c = in.read()) >= 0;)
-            //    System.out.print((char)c);
+            // to do czytania odpowiedzi (nie potrzebne, ale chyba musi byc, moj servlet sie blokowal bez tego)
+            Reader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
+            for (int c; (c = in.read()) >= 0;) {}
 
         } catch (Exception e) {
             Toast.makeText(MainActivity.this, "Can't upload visits!", Toast.LENGTH_SHORT).show();
@@ -528,7 +543,7 @@ public class MainActivity extends Activity {
                     mdevice.close();
                     local.close();
                 } else {
-                    Toast.makeText(getApplicationContext(),"No local file! Updating!",
+                    Toast.makeText(getApplicationContext(), "No local checksum! Updating!",
                             Toast.LENGTH_LONG).show();
                     update = true;
                 }
@@ -559,25 +574,25 @@ public class MainActivity extends Activity {
 
         if (myBluetoothAdapter.isEnabled()) {
 
-            if (userID.equals("")) {
+            if (userID.equals("000000000000")) {
                 userID = myBluetoothAdapter.getAddress().replace(":", "");
                 if (userID.equals("020000000000")) {
                     userID = android.provider.Settings.Secure.getString(this.getContentResolver(), "bluetooth_address").replace(":", "");
                 }
             }
 
-            // TEST DO USUNIECIA
+            // TODO DO USUNIECIA
             //addToVisits("012345678910");
             //addToVisits("999999999999");
             //addToVisits("333333333333");
-            // USUN JEZELI ZOSTAWILEM
+            // USUN/ZAKOMENTUJ JEZELI ZOSTAWILEM
 
             if (myBluetoothAdapter.isDiscovering()) {
                 // the button is pressed when it discovers, so cancel the discovery
                 myBluetoothAdapter.cancelDiscovery();
             } else {
                 updateFolderList();
-                Toast.makeText(getApplicationContext(), "Searching in progress...\nYour ID: "+userID,
+                Toast.makeText(getApplicationContext(), "Searching in progress...",
                         Toast.LENGTH_LONG).show();
                 BTArrayAdapter.clear();
                 myBluetoothAdapter.startDiscovery();
