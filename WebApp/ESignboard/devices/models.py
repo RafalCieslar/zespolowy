@@ -31,3 +31,6 @@ class Stat(models.Model):
     poi = models.ForeignKey(Poi, on_delete=models.CASCADE)
     date = models.DateField()
     counter = models.IntegerField()
+
+    def __str__(self):
+        return self.appid + " " + self.poi + " " + self.date
