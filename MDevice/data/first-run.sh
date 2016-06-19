@@ -14,5 +14,6 @@ source /mdevice/venv/bin/activate
 pip3 install requests
 deactivate
 /mdevice/install-access-point.sh
+touch /mdevice/statistics
 crontab -l 2>/dev/null; cat - /mdevice/cron | crontab -
 rm /mdevice/first_run

@@ -11,6 +11,11 @@ if [ ! -f /mdevice/first_run ]; then
 
     source /mdevice/venv/bin/activate
 
+    #send statistics to the server
+    curl -X POST --data-binary @/mdevice/statistics `cat /mdevice/hostname`/devices/upload/`cat /mdevice/uuid`
+    rm /mdevice/statistics
+    touch /mdevice/statistics
+
     python /mdevice/update_data.py
 
     deactivate
