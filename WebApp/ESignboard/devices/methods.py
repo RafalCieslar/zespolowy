@@ -58,7 +58,7 @@ def createzip(poiobject):
     """
     mdevice = Device.objects.get(pk=poiobject.parent_device.id)
     pois = Poi.objects.filter(parent_device__in=[mdevice.id])
-    files_dir = 'files/' + str(mdevice.id) + '/'
+    files_dir = '../ESignboard/files/' + str(mdevice.id) + '/'
     zip_filename = 'update.zip'  # without trailing slash
     html_filename = '/index.html'  # with trailing slash
     img_filename = '/file.jpg'  # with trailing slash

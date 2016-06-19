@@ -5,7 +5,14 @@
     <div class="container">
         <h1>ESignboard</h1>
         <p>Twoja cyfrowa witryna sklepowa</p>
-        <p><a class="btn btn-primary btn-lg" href="{% url 'user:register' %}" role="button">Dołącz już teraz &raquo;</a> lub zaloguj się w prawym górnym rogu ekranu</p>
+        <div class="col-md-6 nocolors">
+            <h3>Jeżeli chcesz pobrać aplikację</h3>
+            <p><a class="btn btn-primary btn-lg" href="http://play.google.com/" role="button">Pobierz aplikację z Google Play &raquo;</a></p>
+        </div>
+        <div class="col-md-6 nocolors">
+            <h3>Strefa partnera</h3>
+            <p><a class="btn btn-primary btn-lg" href="{% url 'user:register' %}" role="button">Dołącz już teraz &raquo;</a> lub zaloguj się w prawym górnym rogu ekranu</p>
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -116,7 +116,7 @@ def poi_edit(request, device_id):
                 message = "Wysokość załączonego pliku to " + str(
                     h) + " pikseli. Jego wysokość nie może być większa niż 600 pikseli"
             else:
-                path = "files/" + str(vPoi.parent_device.id) + "/" + vPoi.uuid
+                path = "../ESignboard/files/" + str(vPoi.parent_device.id) + "/" + vPoi.uuid
                 checkpath(path)
                 handlefile(picture, path)
                 bbtext = form.cleaned_data['bb_text']
