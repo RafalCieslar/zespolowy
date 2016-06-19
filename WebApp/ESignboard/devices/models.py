@@ -24,3 +24,10 @@ class Poi(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Stat(models.Model):
+    appid = models.CharField(max_length=12)
+    poi = models.ForeignKey(Poi, on_delete=models.CASCADE)
+    date = models.DateField()
+    counter = models.IntegerField()
