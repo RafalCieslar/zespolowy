@@ -73,3 +73,4 @@ def createzip(poiobject):
 
     mdevice.hash = generate_md5(files_dir + '/update.zip')
     mdevice.save()
+

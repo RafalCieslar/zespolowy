@@ -181,3 +181,4 @@ def mdevice_edit(request, device_id):
         form = MDeviceform(initial={'name': device.name})
 
     return render(request, 'devices/mdevice.edit.html', {'form': form, 'message': message})
+
