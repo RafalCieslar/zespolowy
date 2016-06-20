@@ -606,6 +606,7 @@ public class MainActivity extends Activity {
                 Toast.makeText(getApplicationContext(), "Searching in progress...",
                         Toast.LENGTH_LONG).show();
                 BTArrayAdapter.clear();
+                BTArrayAdapterObjects.clear();
                 myBluetoothAdapter.startDiscovery();
                 registerReceiver(bReceiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
             }
