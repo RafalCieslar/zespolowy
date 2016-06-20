@@ -125,4 +125,4 @@ STATIC_URL = '/static/'
 
 # Media files
 
-MEDIA_ROOT = '/home/esignboard/ESignboard/'
+#MEDIA_ROOT = '/home/esignboard/ESignboard/'

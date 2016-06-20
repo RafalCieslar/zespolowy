@@ -4,8 +4,10 @@ from django.core.files.images import get_image_dimensions
 from django.http import Http404, JsonResponse, HttpResponse
 from .forms import POIform, MDeviceform
 from .methods import checkpath, handlefile, createzip
-from .models import Device, Poi
-
+from .models import Device, Poi, Stat
+from django.views.decorators.csrf import csrf_exempt
+import csv
+from io import StringIO
 # Create your views here.
 
 
@@ -23,10 +25,25 @@ def update(request, device_id):
     mdevice = get_object_or_404(Device, pk=device_id)
     return JsonResponse({'data_checksum': mdevice.hash})
 
+@csrf_exempt
+def upload(request, device_id):
+    if request.method == "POST":
+        var = StringIO(request.body.decode('utf-8'))
+        reader = csv.reader(var, delimiter=',', strict=True)
+        for row in reader:
+            stat = Stat()
+            stat.appid = row[0]
+            stat.date = row[1]
+            stat.poi = Poi.objects.get(uuid=row[2])
+            stat.counter = row[3]
+            stat.save()
+        return HttpResponse(status_code=200)
+    else:
+        return Http404
 
 def download(request, device_id):
     mdevice = get_object_or_404(Device, pk=device_id)
-    zip_file = open('files/' + str(mdevice.id) + '/update.zip', 'rb')
+    zip_file = open('/home/esignboard/ESignboard/files/' + str(mdevice.id) + '/update.zip', 'rb')
     response = HttpResponse(zip_file, content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename="%s"' % 'update.zip'
     return response
@@ -44,7 +61,6 @@ def poi_view(request, device_id):
 
 
 def poi_new(request, device_id):
-
     message = ""
     if not request.user.is_authenticated():
         return redirect('user:login')
