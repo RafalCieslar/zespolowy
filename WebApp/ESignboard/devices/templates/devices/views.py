@@ -5,10 +5,18 @@ from django.http import Http404, JsonResponse, HttpResponse
 from .forms import POIform, MDeviceform
 from .methods import checkpath, handlefile, createzip
 from .models import Device, Poi, Stat
-from django.views.decorators.csrf import csrf_exempt
-import csv
-from io import StringIO
+
 # Create your views here.
+
+
+def dashboard(request):
+    if not request.user.is_authenticated():
+        return redirect('user:login')
+    context = dict()
+    context['mdevices'] = Device.objects.filter(owners__in=[request.user.id])
+    context['pois'] = Poi.objects.filter(owners__in=[request.user.id])
+    context['user'] = request.user
+    return render(request, 'devices/dashboard.html', context)
 
 def poi_stats(request, device_id):
     
@@ -20,40 +28,17 @@ def poi_stats(request, device_id):
     context = dict();
     context['stats'] = Stat.objects.filter(poi = device_id).all();
     return render(request, 'devices/stats.html', context);
-
-def dashboard(request):
-    if not request.user.is_authenticated():
-        return redirect('user:login')
-    context = dict()
-    context['mdevices'] = Device.objects.filter(owners__in=[request.user.id])
-    context['pois'] = Poi.objects.filter(owners__in=[request.user.id])
-    context['user'] = request.user
-    return render(request, 'devices/dashboard.html', context)
-
-
+    
+    
+    
 def update(request, device_id):
     mdevice = get_object_or_404(Device, pk=device_id)
     return JsonResponse({'data_checksum': mdevice.hash})
 
-@csrf_exempt
-def upload(request, device_id):
-    if request.method == "POST":
-        var = StringIO(request.body.decode('utf-8'))
-        reader = csv.reader(var, delimiter=',', strict=True)
-        for row in reader:
-            stat = Stat()
-            stat.appid = row[0]
-            stat.date = row[1]
-            stat.poi = Poi.objects.get(uuid=row[2])
-            stat.counter = row[3]
-            stat.save()
-        return HttpResponse(status_code=200)
-    else:
-        return Http404
 
 def download(request, device_id):
     mdevice = get_object_or_404(Device, pk=device_id)
-    zip_file = open('/home/esignboard/ESignboard/files/' + str(mdevice.id) + '/update.zip', 'rb')
+    zip_file = open('files/' + str(mdevice.id) + '/update.zip', 'rb')
     response = HttpResponse(zip_file, content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename="%s"' % 'update.zip'
     return response
@@ -71,6 +56,7 @@ def poi_view(request, device_id):
 
 
 def poi_new(request, device_id):
+
     message = ""
     if not request.user.is_authenticated():
         return redirect('user:login')
@@ -191,4 +177,3 @@ def mdevice_edit(request, device_id):
         form = MDeviceform(initial={'name': device.name})
 
     return render(request, 'devices/mdevice.edit.html', {'form': form, 'message': message})
-

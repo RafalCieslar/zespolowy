@@ -48,15 +48,17 @@
             <div class="row head">
                     <div class="col-md-3">Nazwa</div>
                     <div class="col-md-3">UUID</div>
-                    <div class="col-md-3">MDevice</div>
-                    <div class="col-md-3">Edycja</div>
+                    <div class="col-md-2">MDevice</div>
+                    <div class="col-md-2">Edycja</div>
+					<div class="col-md-2">Statystyki</div>
             </div>
                 {% for poi in pois %}
                     <div class="row">
                         <div class="col-md-3">{{poi.name}}</div>
                         <div class="col-md-3">{{poi.uuid}}</div>
-                        <div class="col-md-3"><a href="{% url 'devices:mdevice_edit' poi.parent_device.id %}">{{poi.parent_device.name}}</a></div>
-                        <div class="col-md-3"><a href="{% url 'devices:poi_edit' poi.id %}">Zmień</a></div>
+                        <div class="col-md-2"><a href="{% url 'devices:mdevice_edit' poi.parent_device.id %}">{{poi.parent_device.name}}</a></div>
+                        <div class="col-md-2"><a href="{% url 'devices:poi_edit' poi.id %}">Zmień</a></div>
+						 <div class="col-md-2"><a href="{% url 'devices:poi_stats' poi.id %}">Statystyki</a></div>
                     </div>
                 {% endfor %}
             {% endif %}
