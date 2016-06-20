@@ -477,27 +477,19 @@ public class MainActivity extends Activity {
 
     private void sendPost(String postAllData) {
         try {
-            URL url = new URL("http://" + ip);
-
-            // TODO DO TESTOW
-            //url = new URL("http://" + ip + "/statistics");
-            // USUN JEZELI ZOSTAWILEM
+            URL url = new URL("http://" + ip + "/statistics");
 
             String[] postData = postAllData.split(" ");
             StringBuilder postDataBuilder = new StringBuilder();
             for (int i = 0; i < postData.length; i+=4) {
                 postDataBuilder.append(
-                        URLEncoder.encode("UserID["+i/4+"]", "UTF-8") + "=" +
-                        URLEncoder.encode(postData[i], "UTF-8") + "&" );
+                        URLEncoder.encode(postData[i], "UTF-8") + "," );
                 postDataBuilder.append(
-                        URLEncoder.encode("Date["+i/4+"]", "UTF-8") + "=" +
-                        URLEncoder.encode(postData[i+1], "UTF-8") + "&" );
+                        URLEncoder.encode(postData[i+1], "UTF-8") + "," );
                 postDataBuilder.append(
-                        URLEncoder.encode("POI["+i/4+"]", "UTF-8") + "=" +
-                        URLEncoder.encode(postData[i+2], "UTF-8") + "&" );
+                        URLEncoder.encode(postData[i+2], "UTF-8") + "," );
                 postDataBuilder.append(
-                        URLEncoder.encode("Count["+i/4+"]", "UTF-8") + "=" +
-                        URLEncoder.encode(postData[i+3], "UTF-8") + "&" );
+                        URLEncoder.encode(postData[i+3], "UTF-8") + "\n" );
             }
             byte[] postDataBytes = postDataBuilder.toString().getBytes("UTF-8");
 
