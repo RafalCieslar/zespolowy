@@ -61,7 +61,7 @@ public class MainActivity extends Activity {
     private BluetoothAdapter myBluetoothAdapter;
     private ArrayAdapter<String> BTArrayAdapter;
     private HashSet<String> eSignboardDevices  = new HashSet<String>();
-
+    private HashSet<BTObj> BTArrayAdapterObjects;
 
     private WifiManager myWifiManager;
     private WifiReceiver myWifiReceiver;
@@ -85,7 +85,7 @@ public class MainActivity extends Activity {
                 .permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-
+        BTArrayAdapterObjects = new HashSet<BTObj>();
 
         // TODO DO TESTOW
         //ip = "192.168.0.69:8080";
@@ -133,12 +133,8 @@ public class MainActivity extends Activity {
 
             checkAndRequestForBT();
 
-
-
             // create the arrayAdapter that contains the BTDevices
             BTArrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1);
-
-
 
             findBtn = (Button)findViewById(R.id.search);
             findBtn.setOnClickListener(new OnClickListener() {
@@ -149,8 +145,6 @@ public class MainActivity extends Activity {
                 }
             });
 
-
-
             updateBtn = (Button)findViewById(R.id.update);
             updateBtn.setOnClickListener(new OnClickListener() {
 
@@ -159,7 +153,6 @@ public class MainActivity extends Activity {
                     checkForUpdate();
                 }
             });
-
 
 
         }
@@ -182,6 +175,8 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onResume() {
+
+       if (!myBluetoothAdapter.isDiscovering()) {myBluetoothAdapter.startDiscovery();}
         if (!dontAskAgain)
             registerReceiver(myWifiReceiver, new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));
         super.onResume();
@@ -229,6 +224,8 @@ public class MainActivity extends Activity {
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
             // When discovery finds a device
+
+
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 // Get the BluetoothDevice object from the Intent
                 BluetoothDevice poi = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
@@ -236,12 +233,22 @@ public class MainActivity extends Activity {
                 // add the name and the MAC address of the object to the arrayAdapter
                 BTArrayAdapter.add(poiAddress);
                 BTArrayAdapter.notifyDataSetChanged();
+                BTObj b = new BTObj();
+                b.setAddress(poiAddress);
+                int  rssi = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI,Short.MIN_VALUE);
+                b.setRssi(rssi);
 
+                //if new poi discovered, add it
                 if(eSignboardDevices.contains(poiAddress)){
+
+                    BTArrayAdapterObjects.add(b);
+                    poiAddress = getDeviceWithMaxDBMAddress();
+
                     notyfikuj("ESignboard in range!", "");
                     addToVisits(poiAddress);
                     Intent showHtmlIntent = new Intent(getApplicationContext(), HtmlDisplay.class);
                     showHtmlIntent.putExtra("device-name", poiAddress);
+                    myBluetoothAdapter.cancelDiscovery();
                     startActivity(showHtmlIntent);
                 }
             }
@@ -567,7 +574,19 @@ public class MainActivity extends Activity {
         }
     }
 
-
+    private String getDeviceWithMaxDBMAddress()
+    {
+        BTObj bt = new BTObj();
+        bt.setRssi(-1000);
+        bt.setAddress("");
+        for (BTObj b: BTArrayAdapterObjects) {
+            if(b.getRssi()>bt.getRssi()){
+                bt.setAddress(b.getAddress());
+                bt.setRssi(b.getRssi());
+            }
+        }
+        return bt.getAddress();
+    }
 
     private void find(View view) {
         checkAndRequestForBT();
@@ -596,7 +615,6 @@ public class MainActivity extends Activity {
                         Toast.LENGTH_LONG).show();
                 BTArrayAdapter.clear();
                 myBluetoothAdapter.startDiscovery();
-
                 registerReceiver(bReceiver, new IntentFilter(BluetoothDevice.ACTION_FOUND));
             }
         }
